@@ -71,7 +71,8 @@ namespace A320FlowTrainer
             try
             {
                 var json = File.ReadAllText(filename);
-                _flows = JsonSerializer.Deserialize<List<Flow>>(json) ?? new();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                _flows = JsonSerializer.Deserialize<List<Flow>>(json, options) ?? new();
                 Console.WriteLine($"Loaded {_flows.Count} flows with {_flows.Sum(f => f.Items.Count)} total items.\n");
                 return _flows.Count > 0;
             }
@@ -86,8 +87,27 @@ namespace A320FlowTrainer
         {
             try
             {
-                _recognizer = new SpeechRecognitionEngine();
-                
+                // Visa tillgängliga speech recognition-språk
+                var installedRecognizers = SpeechRecognitionEngine.InstalledRecognizers();
+                Console.WriteLine($"Installed speech recognizers: {installedRecognizers.Count}");
+                foreach (var recognizer in installedRecognizers)
+                {
+                    Console.WriteLine($"  - {recognizer.Culture.Name}: {recognizer.Description}");
+                }
+
+                // Försök hitta en engelsk recognizer
+                var englishRecognizer = installedRecognizers
+                    .FirstOrDefault(r => r.Culture.Name.StartsWith("en"));
+
+                if (englishRecognizer == null)
+                {
+                    Console.WriteLine("No English speech recognizer found.");
+                    return false;
+                }
+
+                Console.WriteLine($"Using: {englishRecognizer.Culture.Name}");
+                _recognizer = new SpeechRecognitionEngine(englishRecognizer);
+
                 // Bygg grammar med alla möjliga fraser
                 var choices = new Choices();
                 
@@ -148,9 +168,11 @@ namespace A320FlowTrainer
                 choices.Add("exit");
                 choices.Add("stop");
                 
-                var grammar = new Grammar(new GrammarBuilder(choices));
+                var grammarBuilder = new GrammarBuilder(choices);
+                grammarBuilder.Culture = englishRecognizer.Culture;
+                var grammar = new Grammar(grammarBuilder);
                 grammar.Name = "FlowCommands";
-                
+
                 _recognizer.LoadGrammar(grammar);
                 _recognizer.SetInputToDefaultAudioDevice();
                 
