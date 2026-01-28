@@ -24,9 +24,11 @@ import subprocess
 import argparse
 from pathlib import Path
 
-def generate_with_piper_cli(text, output_path, model_path):
+def generate_with_piper_cli(text, output_path, model_path, piper_exe="piper"):
     """Generera ljud med piper CLI."""
-    cmd = f'echo "{text}" | piper --model {model_path} --output_file {output_path}'
+    # Escape quotes in text
+    text_escaped = text.replace('"', '\\"')
+    cmd = f'echo "{text_escaped}" | "{piper_exe}" --model "{model_path}" --output_file "{output_path}"'
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     return result.returncode == 0
 
@@ -51,6 +53,7 @@ def generate_with_piper_python(text, output_path, model_path):
 def main():
     parser = argparse.ArgumentParser(description='Generate audio files with Piper TTS')
     parser.add_argument('--model', '-m', required=True, help='Path to Piper model (.onnx file)')
+    parser.add_argument('--piper', '-p', default='piper', help='Path to piper executable')
     parser.add_argument('--use-cli', action='store_true', help='Use Piper CLI instead of Python module')
     args = parser.parse_args()
     
@@ -89,12 +92,12 @@ def main():
         text = af['text']
         
         if args.use_cli:
-            ok = generate_with_piper_cli(text, filepath, model_path)
+            ok = generate_with_piper_cli(text, filepath, model_path, args.piper)
         else:
             ok = generate_with_piper_python(text, filepath, model_path)
             if ok is None:
                 print("Python piper module not available, falling back to CLI...")
-                ok = generate_with_piper_cli(text, filepath, model_path)
+                ok = generate_with_piper_cli(text, filepath, model_path, args.piper)
         
         if ok:
             print(f"  [{i+1}/{len(audio_files)}] OK: {filename}")

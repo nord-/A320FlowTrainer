@@ -27,3 +27,6 @@ Thumbs.db
 
 # Claude Code
 .claude/
+
+# Tools (Piper TTS etc)
+tools/
