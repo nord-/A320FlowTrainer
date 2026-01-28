@@ -66,6 +66,12 @@ namespace A320FlowTrainer
                 _useTextFallback = true;
             }
 
+            // Vänta på användaren innan vi startar
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("\n  Press any key to start...");
+            Console.ResetColor();
+            Console.ReadKey(true);
+
             // Huvudloop
             RunFlowTrainer();
 
