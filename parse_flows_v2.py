@@ -126,7 +126,7 @@ flows_data = [
             ("TAXI CLEARANCE", "OBTAIN"),
             ("PARK BRAKE", "RELEASED"),
             ("AUTO BRAKE", "MAX"),
-            ("TO CONFIG", "PRESS"),
+            ("T.O. CONFIG", "PRESS"),
             ("TAXI LIGHT", "ON"),
         ]
     },
@@ -305,7 +305,7 @@ def expand_abbreviations(text):
         # Specifika fraser
         r'\bTA/RA\b': 'T A, R A',
         r'\bT/O\b': 'Takeoff',
-        r'\bTO CONFIG\b': 'Takeoff Config',
+        r'T\.O\.': 'Take-off',
         r'\b1\+2\b': '1 and 2',
         r'\b>150\b': 'greater than 150',
         r'\b>300\b': 'greater than 300',

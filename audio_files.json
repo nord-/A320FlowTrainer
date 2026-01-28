@@ -725,10 +725,10 @@
   },
   {
     "id": "taxi_flows_3",
-    "text": "TO Configuration: PRESS",
-    "filename": "taxi_flows_03_to_config.wav",
+    "text": "Take-off Configuration: PRESS",
+    "filename": "taxi_flows_03_t_o_config.wav",
     "flow": "TAXI FLOWS",
-    "item": "TO CONFIG",
+    "item": "T.O. CONFIG",
     "response": "PRESS"
   },
   {
