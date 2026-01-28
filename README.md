@@ -110,7 +110,7 @@ Efter ändringar i flows, kör `parse_flows_v2.py` för att uppdatera `audio_fil
 ## Krav
 
 - Windows (för System.Speech)
-- .NET 8.0 eller senare
+- .NET 10.0 eller senare
 - Mikrofon (för röstinmatning)
 
 ## Felsökning

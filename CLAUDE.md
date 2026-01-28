@@ -47,8 +47,8 @@ python generate_audio_piper.py --model path/to/en_US-joe-medium.onnx
 - `A320FlowTrainer/Program.cs` - all applikationslogik (single-file)
 
 **C# dependencies:**
-- .NET 8.0 Windows
-- System.Speech (recognition + synthesis)
+- .NET 10.0 Windows
+- System.Speech NuGet package (recognition + synthesis)
 - System.Media.SoundPlayer (.wav playback)
 
 ## Notes
