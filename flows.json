@@ -1,0 +1,646 @@
+[
+  {
+    "name": "COCKPIT PREPARATION FLOWS",
+    "trigger_phrase": "cockpit preparation flows",
+    "items": [
+      {
+        "item": "PFD LT",
+        "response": "BRT"
+      },
+      {
+        "item": "ND LT",
+        "response": "BRT"
+      },
+      {
+        "item": "ECAM UPPER DISPLAY",
+        "response": "BRT"
+      },
+      {
+        "item": "ECAM LOWER DISPLAY",
+        "response": "BRT"
+      },
+      {
+        "item": "FLOOD LT",
+        "response": "AS RQRD"
+      },
+      {
+        "item": "INTEG LT",
+        "response": "AS RQRD"
+      },
+      {
+        "item": "BATTERY",
+        "response": "ON - CHECK VOLTAGE"
+      },
+      {
+        "item": "EXTERNAL POWER",
+        "response": "ON"
+      },
+      {
+        "item": "IRS/ADIRS",
+        "response": "ON"
+      },
+      {
+        "item": "ELEC HYDR PUMP",
+        "response": "ON"
+      },
+      {
+        "item": "FUEL PUMPS",
+        "response": "ON"
+      },
+      {
+        "item": "ENG GEN",
+        "response": "ON/FAULT"
+      },
+      {
+        "item": "PACK 1+2",
+        "response": "ON"
+      },
+      {
+        "item": "ENG BLEED 1+2",
+        "response": "ON"
+      },
+      {
+        "item": "HOT AIR",
+        "response": "ON"
+      },
+      {
+        "item": "ENG ANTI ICE/PROBE",
+        "response": "OFF"
+      },
+      {
+        "item": "EMERGENCY LIGHTS",
+        "response": "ARMED"
+      },
+      {
+        "item": "CABIN SIGNS",
+        "response": "ON"
+      },
+      {
+        "item": "NAV & LOGO LIGHTS",
+        "response": "ON"
+      },
+      {
+        "item": "EFC 1+2",
+        "response": "ON"
+      },
+      {
+        "item": "GPWS",
+        "response": "ON"
+      },
+      {
+        "item": "PARK BRAKE",
+        "response": "SET"
+      },
+      {
+        "item": "FLAPS",
+        "response": "VERIFY 0"
+      },
+      {
+        "item": "SPEEDBRAKE",
+        "response": "RETRACTED/DISARMED"
+      },
+      {
+        "item": "ENG MASTER 1+2",
+        "response": "OFF"
+      },
+      {
+        "item": "ENG MODE SEL",
+        "response": "NORM"
+      },
+      {
+        "item": "THRUST LEVERS",
+        "response": "IDLE"
+      },
+      {
+        "item": "TRANSPONDER",
+        "response": "STANDBY"
+      },
+      {
+        "item": "RADIO CONTROL PANEL",
+        "response": "ON"
+      },
+      {
+        "item": "FREQUENCIES",
+        "response": "SET"
+      },
+      {
+        "item": "ECAM RECALL BUTTON",
+        "response": "SELECT"
+      },
+      {
+        "item": "LANDING GEAR",
+        "response": "VERIFY DOWN"
+      },
+      {
+        "item": "MCDU2 DOORS",
+        "response": "VERIFY OPEN"
+      },
+      {
+        "item": "ANTISKID/NWS",
+        "response": "ON"
+      },
+      {
+        "item": "FD",
+        "response": "ON"
+      }
+    ]
+  },
+  {
+    "name": "FMGS SETUP",
+    "trigger_phrase": "fmgs setup",
+    "items": [
+      {
+        "item": "ATIS/ATC CLEARANCE",
+        "response": "OBTAIN"
+      },
+      {
+        "item": "TRANSPONDER CODE",
+        "response": "SET"
+      },
+      {
+        "item": "MCDU",
+        "response": "SET"
+      },
+      {
+        "item": "QNH MODE",
+        "response": "VERIFY"
+      },
+      {
+        "item": "QNH",
+        "response": "SET"
+      },
+      {
+        "item": "ND MODE/RANGE",
+        "response": "SET"
+      },
+      {
+        "item": "VOR/ADF",
+        "response": "SELECT"
+      },
+      {
+        "item": "SPEED MANAGED/SELECTED",
+        "response": "AS RQRD"
+      },
+      {
+        "item": "HDG MANAGED/SELECTED",
+        "response": "AS RQRD"
+      },
+      {
+        "item": "INITIAL ALTITUDE SET/MANAGED/SELECTED",
+        "response": "AS RQRD"
+      },
+      {
+        "item": "IRS",
+        "response": "CONFIRM ALIGNED"
+      },
+      {
+        "item": "FD",
+        "response": "CYCLE OFF THEN ON"
+      },
+      {
+        "item": "LS",
+        "response": "OFF"
+      },
+      {
+        "item": "FCU",
+        "response": "VERIFY CORRECT & COMPLETE"
+      }
+    ]
+  },
+  {
+    "name": "BEFORE START FLOWS",
+    "trigger_phrase": "before start flows",
+    "items": [
+      {
+        "item": "FUELING",
+        "response": "VERIFY DISCONNECTED, KG, BALANCED, & SUFFICIENT"
+      },
+      {
+        "item": "CHOCKS",
+        "response": "REMOVED"
+      },
+      {
+        "item": "TRAFFIC CONES",
+        "response": "REMOVED"
+      },
+      {
+        "item": "APU",
+        "response": "START"
+      },
+      {
+        "item": "APU BLEED",
+        "response": "ON"
+      },
+      {
+        "item": "EXT POWER",
+        "response": "OFF"
+      },
+      {
+        "item": "DOORS",
+        "response": "CLOSED"
+      },
+      {
+        "item": "BEACON",
+        "response": "ON"
+      }
+    ]
+  },
+  {
+    "name": "PUSHBACK & ENGINE START FLOWS",
+    "trigger_phrase": "pushback & engine start flows",
+    "items": [
+      {
+        "item": "PUSH & START CLEARANCE",
+        "response": "OBTAIN"
+      },
+      {
+        "item": "GROUND COMMUNICATION",
+        "response": "INITIATE/FOLLOW COMMANDS"
+      },
+      {
+        "item": "RIGHT SIDE",
+        "response": "VERIFY CLEAR"
+      },
+      {
+        "item": "ENG MODE SELECTOR",
+        "response": "IGN/START"
+      },
+      {
+        "item": "ENG MASTER 2",
+        "response": "ON"
+      },
+      {
+        "item": "ECAM",
+        "response": "MONITOR"
+      },
+      {
+        "item": "ENGINE",
+        "response": "CONFIRM STABILIZED"
+      },
+      {
+        "item": "STEP 3, 5-7",
+        "response": "REPEAT FOR ENG 1"
+      }
+    ]
+  },
+  {
+    "name": "AFTER START FLOWS",
+    "trigger_phrase": "after start flows",
+    "items": [
+      {
+        "item": "ENG & WING ANTI ICE",
+        "response": "AS RQRD"
+      },
+      {
+        "item": "APU BLEED",
+        "response": "OFF"
+      },
+      {
+        "item": "APU MASTER",
+        "response": "OFF"
+      },
+      {
+        "item": "PITCH TRIM",
+        "response": "SET"
+      },
+      {
+        "item": "ENG MODE SELECTOR",
+        "response": "AS RQRD"
+      },
+      {
+        "item": "SPOILERS",
+        "response": "ARMED"
+      },
+      {
+        "item": "FLAPS",
+        "response": "SET"
+      },
+      {
+        "item": "RUD TRIM",
+        "response": "0"
+      },
+      {
+        "item": "FLIGHT CONTROLS",
+        "response": "CHECK"
+      },
+      {
+        "item": "ECAM DOOR PAGE",
+        "response": "CHECKED"
+      },
+      {
+        "item": "ECAM STATUS",
+        "response": "CHECKED"
+      },
+      {
+        "item": "HAND SIGNALS",
+        "response": "RECEIVED"
+      }
+    ]
+  },
+  {
+    "name": "TAXI FLOWS",
+    "trigger_phrase": "taxi flows",
+    "items": [
+      {
+        "item": "TAXI CLEARANCE",
+        "response": "OBTAIN"
+      },
+      {
+        "item": "PARK BRAKE",
+        "response": "RELEASED"
+      },
+      {
+        "item": "AUTO BRAKE",
+        "response": "MAX"
+      },
+      {
+        "item": "TO CONFIG",
+        "response": "PRESS"
+      },
+      {
+        "item": "TAXI LIGHT",
+        "response": "ON"
+      }
+    ]
+  },
+  {
+    "name": "BEFORE TAKE OFF FLOWS",
+    "trigger_phrase": "before take off flows",
+    "items": [
+      {
+        "item": "TCAS",
+        "response": "TA/RA - TILT ABOVE"
+      },
+      {
+        "item": "ENG MODE SELECTOR",
+        "response": "AS RQRD"
+      },
+      {
+        "item": "BRAKE TEMP",
+        "response": "CHECK GREATER THAN 150"
+      },
+      {
+        "item": "BRAKE FANS",
+        "response": "OFF"
+      },
+      {
+        "item": "SLIDING TABLE",
+        "response": "STOWED"
+      },
+      {
+        "item": "TAKE OFF/LINE UP CLEARANCE",
+        "response": "OBTAIN"
+      },
+      {
+        "item": "EXT LIGHTS",
+        "response": "ON"
+      }
+    ]
+  },
+  {
+    "name": "AFTER TAKE OFF FLOWS",
+    "trigger_phrase": "after take off flows",
+    "items": [
+      {
+        "item": "SPOILER",
+        "response": "DISARM"
+      },
+      {
+        "item": "ENGINE MODE SELECTOR",
+        "response": "AS RQRD"
+      },
+      {
+        "item": "TAXI LIGHT",
+        "response": "OFF"
+      },
+      {
+        "item": "ENG & WING ANTI ICE",
+        "response": "AS RQRD"
+      },
+      {
+        "item": "PACK 1+2",
+        "response": "ON"
+      }
+    ],
+    "note": "At acceleration height"
+  },
+  {
+    "name": "10000 FT CLIMB FLOWS",
+    "trigger_phrase": "10000 ft climb flows",
+    "items": [
+      {
+        "item": "EXT LIGHTS",
+        "response": "OFF"
+      },
+      {
+        "item": "SEAT BELT SIGN",
+        "response": "AS RQRD"
+      },
+      {
+        "item": "PRESSURIZATION",
+        "response": "CHECKED"
+      }
+    ]
+  },
+  {
+    "name": "PREDESCENT FLOWS",
+    "trigger_phrase": "predescent flows",
+    "items": [
+      {
+        "item": "ATIS",
+        "response": "OBTAIN"
+      },
+      {
+        "item": "MCDU",
+        "response": "FPLN, PERF, NAV/RAD SET"
+      },
+      {
+        "item": "NAV ACCURACY",
+        "response": "CHECK"
+      },
+      {
+        "item": "AUTO BRAKE",
+        "response": "SET"
+      },
+      {
+        "item": "SEAT BELT SIGN",
+        "response": "ON"
+      },
+      {
+        "item": "ANTI ICE",
+        "response": "AS RQRD"
+      }
+    ]
+  },
+  {
+    "name": "10000 FT DESCENT FLOWS",
+    "trigger_phrase": "10000 ft descent flows",
+    "items": [
+      {
+        "item": "SLIDING TABLES",
+        "response": "STOWED"
+      },
+      {
+        "item": "EXT LIGHTS",
+        "response": "ON"
+      },
+      {
+        "item": "SEAT BELT SIGN",
+        "response": "VERIFY ON"
+      },
+      {
+        "item": "LS",
+        "response": "PUSH"
+      },
+      {
+        "item": "PRESSURIZATION",
+        "response": "CHECKED"
+      },
+      {
+        "item": "ECAM STATUS",
+        "response": "CHECK"
+      }
+    ]
+  },
+  {
+    "name": "LANDING FLOWS",
+    "trigger_phrase": "landing flows",
+    "items": [
+      {
+        "item": "TAXI LIGHT",
+        "response": "SET T/O"
+      },
+      {
+        "item": "MISSED APPROACH ALTITUDE",
+        "response": "SET"
+      },
+      {
+        "item": "SPOILERS",
+        "response": "ARMED"
+      },
+      {
+        "item": "LANDING MEMO",
+        "response": "NO BLUE"
+      }
+    ],
+    "note": "When fully configured and established on approach"
+  },
+  {
+    "name": "AFTER LANDING FLOWS",
+    "trigger_phrase": "after landing flows",
+    "items": [
+      {
+        "item": "SPOILERS",
+        "response": "RETRACT"
+      },
+      {
+        "item": "ENG MODE SELECTOR",
+        "response": "NORM"
+      },
+      {
+        "item": "FLAPS",
+        "response": "RETRACT"
+      },
+      {
+        "item": "TRANSPONDER",
+        "response": "STBY"
+      },
+      {
+        "item": "BRAKE TEMP",
+        "response": "CHECK GREATER THAN 300"
+      },
+      {
+        "item": "EXT LIGHTS",
+        "response": "OFF"
+      },
+      {
+        "item": "APU",
+        "response": "START"
+      },
+      {
+        "item": "ENGINE & WING ANTI ICE",
+        "response": "OFF"
+      }
+    ]
+  },
+  {
+    "name": "PARKING FLOWS",
+    "trigger_phrase": "parking flows",
+    "items": [
+      {
+        "item": "PARK BRAKE",
+        "response": "SET"
+      },
+      {
+        "item": "ENG MASTER 1+2",
+        "response": "OFF"
+      },
+      {
+        "item": "SEAT BELT SIGN",
+        "response": "OFF"
+      },
+      {
+        "item": "BEACON",
+        "response": "OFF"
+      },
+      {
+        "item": "EXT POWER",
+        "response": "ON"
+      },
+      {
+        "item": "FUEL PUMPS",
+        "response": "OFF"
+      },
+      {
+        "item": "APU",
+        "response": "AS RQRD"
+      }
+    ]
+  },
+  {
+    "name": "SECURING FLOWS",
+    "trigger_phrase": "securing flows",
+    "items": [
+      {
+        "item": "PFD LT",
+        "response": "OFF"
+      },
+      {
+        "item": "ND LT",
+        "response": "OFF"
+      },
+      {
+        "item": "ECAM UPPER LT",
+        "response": "OFF"
+      },
+      {
+        "item": "ECAM LOWER LT",
+        "response": "OFF"
+      },
+      {
+        "item": "ADIRS",
+        "response": "OFF"
+      },
+      {
+        "item": "EXT POWER",
+        "response": "OFF"
+      },
+      {
+        "item": "GEN",
+        "response": "ON"
+      },
+      {
+        "item": "APU",
+        "response": "SHUTDOWN"
+      },
+      {
+        "item": "CABIN SIGNS & EMERGENCY LIGHTS",
+        "response": "OFF"
+      },
+      {
+        "item": "BAT 1+2",
+        "response": "OFF"
+      }
+    ]
+  }
+]
