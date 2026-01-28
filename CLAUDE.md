@@ -48,8 +48,14 @@ python generate_audio_piper.py --model path/to/en_US-joe-medium.onnx
 
 **C# dependencies:**
 - .NET 10.0 Windows
-- System.Speech NuGet package (recognition + synthesis)
+- Vosk (speech recognition)
+- NAudio (audio capture)
+- System.Speech NuGet package (TTS synthesis)
 - System.Media.SoundPlayer (.wav playback)
+
+**Vosk model:**
+- Måste laddas ner separat till `A320FlowTrainer/model/`
+- Använder `vosk-model-small-en-us-0.15` (~40MB)
 
 ## Code Style
 
@@ -57,6 +63,7 @@ python generate_audio_piper.py --model path/to/en_US-joe-medium.onnx
 
 ## Notes
 
-- Windows-only (kräver System.Speech)
+- Windows-only (kräver System.Speech för TTS)
+- Vosk för röstigenkänning (offline, bättre än Windows Speech Recognition)
 - Fallback till Windows TTS om ljudfiler saknas
-- Fallback till tangentbord om mikrofon saknas
+- Fallback till tangentbord om Vosk-modell saknas

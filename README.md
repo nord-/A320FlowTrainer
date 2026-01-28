@@ -33,7 +33,20 @@ python generate_audio_piper.py --model path/to/en_US-joe-medium.onnx
 ```
 Detta skapar .wav-filer i `audio/` mappen.
 
-### 2. Bygg och kör C#-appen
+### 2. Ladda ner Vosk-modell (för röststyrning)
+
+```bash
+cd A320FlowTrainer
+mkdir model
+cd model
+curl -LO https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
+unzip vosk-model-small-en-us-0.15.zip
+mv vosk-model-small-en-us-0.15/* .
+rmdir vosk-model-small-en-us-0.15
+rm vosk-model-small-en-us-0.15.zip
+```
+
+### 3. Bygg och kör C#-appen
 
 ```bash
 cd A320FlowTrainer
@@ -46,11 +59,12 @@ Eller publicera som standalone:
 dotnet publish -c Release -r win-x64 --self-contained
 ```
 
-### 3. Kopiera filer
+### 4. Kopiera filer
 
 Kopiera följande till samma mapp som .exe-filen:
 - `flows.json`
 - `audio/` mappen med alla ljudfiler
+- `model/` mappen med Vosk-modellen
 
 ## Användning
 
@@ -109,16 +123,20 @@ Efter ändringar i flows, kör `parse_flows_v2.py` för att uppdatera `audio_fil
 
 ## Krav
 
-- Windows (för System.Speech)
+- Windows (för System.Speech TTS)
 - .NET 10.0 eller senare
 - Mikrofon (för röstinmatning)
+- Vosk-modell (se steg 2 ovan)
 
 ## Felsökning
 
+**"Vosk model not found"**
+- Kontrollera att `model/` mappen finns med Vosk-modellen
+- Se steg 2 i Setup ovan
+
 **"Speech recognition not available"**
 - Kontrollera att du har en mikrofon ansluten
-- Kör programmet som administratör
-- Windows Speech Recognition måste vara installerat
+- Kontrollera att rätt mikrofon är vald som default i Windows
 
 **Inget ljud spelas**
 - Kontrollera att `audio/` mappen finns

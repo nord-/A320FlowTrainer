@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Speech.Recognition;
 using System.Speech.Synthesis;
 using System.Text.Json;
 using System.Threading;
+using NAudio.CoreAudioApi;
+using NAudio.Wave;
+using Vosk;
 
 namespace A320FlowTrainer
 {
@@ -13,18 +15,24 @@ namespace A320FlowTrainer
     {
         static List<Flow> _flows = new();
         static string _audioDir = "audio";
-        static SpeechRecognitionEngine? _recognizer;
-        static ManualResetEvent _recognitionComplete = new(false);
-        static string _lastRecognizedText = "";
+        static string _modelPath = "model";
+        static Model? _voskModel;
+        static VoskRecognizer? _voskRecognizer;
+        static WaveInEvent? _waveIn;
         static bool _useTextFallback = false;
+        static string _lastRecognizedText = "";
+        static readonly object _recognitionLock = new();
+        static ManualResetEvent _recognitionComplete = new(false);
+        static bool _isListening = false;
 
         static void Main(string[] args)
         {
             Console.Title = "A320 Flow Trainer";
             Console.OutputEncoding = System.Text.Encoding.UTF8;
-            
+
             PrintHeader();
-            
+            ShowAudioDevices();
+
             // Ladda flows
             if (!LoadFlows("flows.json"))
             {
@@ -33,9 +41,9 @@ namespace A320FlowTrainer
                 Console.ReadKey();
                 return;
             }
-            
-            // Initiera speech recognition
-            if (!InitializeSpeechRecognition())
+
+            // Initiera Vosk speech recognition
+            if (!InitializeVosk())
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("\nWARNING: Speech recognition not available.");
@@ -44,12 +52,49 @@ namespace A320FlowTrainer
                 Console.ResetColor();
                 _useTextFallback = true;
             }
-            
+
             // Huvudloop
             RunFlowTrainer();
-            
+
             // Cleanup
-            _recognizer?.Dispose();
+            StopListening();
+            _voskRecognizer?.Dispose();
+            _voskModel?.Dispose();
+        }
+
+        static void ShowAudioDevices()
+        {
+            try
+            {
+                var enumerator = new MMDeviceEnumerator();
+
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("Audio Input Devices:");
+                Console.ResetColor();
+
+                try
+                {
+                    var defaultDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Communications);
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"  ► DEFAULT: {defaultDevice.FriendlyName}");
+                    Console.ResetColor();
+                }
+                catch
+                {
+                    Console.WriteLine("  (No default device)");
+                }
+
+                var devices = enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active);
+                foreach (var device in devices)
+                {
+                    Console.WriteLine($"    - {device.FriendlyName}");
+                }
+                Console.WriteLine();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Could not enumerate audio devices: {ex.Message}\n");
+            }
         }
 
         static void PrintHeader()
@@ -83,134 +128,153 @@ namespace A320FlowTrainer
             }
         }
 
-        static bool InitializeSpeechRecognition()
+        static bool InitializeVosk()
         {
             try
             {
-                // Visa tillgängliga speech recognition-språk
-                var installedRecognizers = SpeechRecognitionEngine.InstalledRecognizers();
-                Console.WriteLine($"Installed speech recognizers: {installedRecognizers.Count}");
-                foreach (var recognizer in installedRecognizers)
+                // Kolla att modellen finns
+                if (!Directory.Exists(_modelPath))
                 {
-                    Console.WriteLine($"  - {recognizer.Culture.Name}: {recognizer.Description}");
-                }
-
-                // Försök hitta en engelsk recognizer
-                var englishRecognizer = installedRecognizers
-                    .FirstOrDefault(r => r.Culture.Name.StartsWith("en"));
-
-                if (englishRecognizer == null)
-                {
-                    Console.WriteLine("No English speech recognizer found.");
+                    Console.WriteLine($"ERROR: Vosk model not found at '{_modelPath}'");
+                    Console.WriteLine("Download a model from https://alphacephei.com/vosk/models");
                     return false;
                 }
 
-                Console.WriteLine($"Using: {englishRecognizer.Culture.Name}");
-                _recognizer = new SpeechRecognitionEngine(englishRecognizer);
+                Console.WriteLine("Loading Vosk speech recognition model...");
+                Vosk.Vosk.SetLogLevel(-1); // Tysta Vosk-loggar
 
-                // Bygg grammar med alla möjliga fraser
-                var choices = new Choices();
-                
-                // Flow-namn
-                foreach (var flow in _flows)
+                _voskModel = new Model(_modelPath);
+                _voskRecognizer = new VoskRecognizer(_voskModel, 16000.0f);
+                _voskRecognizer.SetMaxAlternatives(0);
+                _voskRecognizer.SetWords(true);
+
+                // Starta mikrofon-capture
+                _waveIn = new WaveInEvent
                 {
-                    choices.Add(flow.Name.ToLower());
-                    // Lägg till varianter utan "flows"
-                    var simplified = flow.Name.ToLower()
-                        .Replace(" flows", "")
-                        .Replace("flows", "");
-                    if (!string.IsNullOrWhiteSpace(simplified))
-                        choices.Add(simplified.Trim());
-                }
-                
-                // Bekräftelser
-                choices.Add("checked");
-                choices.Add("check");
-                choices.Add("confirmed");
-                choices.Add("set");
-                choices.Add("done");
-                choices.Add("yes");
-                choices.Add("next");
-                
-                // Item-specifika svar
-                choices.Add("on");
-                choices.Add("off");
-                choices.Add("bright");
-                choices.Add("obtained");
-                choices.Add("removed");
-                choices.Add("closed");
-                choices.Add("received");
-                choices.Add("monitoring");
-                choices.Add("armed");
-                choices.Add("disarmed");
-                choices.Add("retracted");
-                choices.Add("released");
-                choices.Add("stowed");
-                choices.Add("idle");
-                choices.Add("max");
-                choices.Add("maximum");
-                choices.Add("normal");
-                choices.Add("standby");
-                choices.Add("start");
-                choices.Add("started");
-                choices.Add("pressed");
-                choices.Add("selected");
-                choices.Add("verified");
-                choices.Add("aligned");
-                choices.Add("stabilized");
-                choices.Add("stable");
-                choices.Add("shutdown");
-                
-                // Kontrollkommandon
-                choices.Add("skip");
-                choices.Add("repeat");
-                choices.Add("quit");
-                choices.Add("exit");
-                choices.Add("stop");
-                
-                var grammarBuilder = new GrammarBuilder(choices);
-                grammarBuilder.Culture = englishRecognizer.Culture;
-                var grammar = new Grammar(grammarBuilder);
-                grammar.Name = "FlowCommands";
+                    WaveFormat = new WaveFormat(16000, 16, 1), // 16kHz, 16-bit, mono
+                    BufferMilliseconds = 100
+                };
 
-                _recognizer.LoadGrammar(grammar);
-                _recognizer.SetInputToDefaultAudioDevice();
-                
-                _recognizer.SpeechRecognized += OnSpeechRecognized;
-                _recognizer.SpeechRecognitionRejected += OnSpeechRejected;
-                
+                _waveIn.DataAvailable += OnAudioDataAvailable;
+
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Vosk speech recognition ready!\n");
+                Console.ResetColor();
+
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Speech recognition init failed: {ex.Message}");
+                Console.WriteLine($"Vosk init failed: {ex.Message}");
                 return false;
             }
         }
 
-        static void OnSpeechRecognized(object? sender, SpeechRecognizedEventArgs e)
+        static void StartListening()
         {
-            if (e.Result.Confidence > 0.5)
+            if (_waveIn != null && !_isListening)
             {
-                _lastRecognizedText = e.Result.Text.ToLower();
-                _recognitionComplete.Set();
+                _waveIn.StartRecording();
+                _isListening = true;
             }
         }
 
-        static void OnSpeechRejected(object? sender, SpeechRecognitionRejectedEventArgs e)
+        static void StopListening()
         {
-            // Ignorera - vänta på bättre input
+            if (_waveIn != null && _isListening)
+            {
+                _waveIn.StopRecording();
+                _isListening = false;
+            }
+        }
+
+        static void OnAudioDataAvailable(object? sender, WaveInEventArgs e)
+        {
+            if (_voskRecognizer == null) return;
+
+            lock (_recognitionLock)
+            {
+                if (_voskRecognizer.AcceptWaveform(e.Buffer, e.BytesRecorded))
+                {
+                    var result = _voskRecognizer.Result();
+                    var text = ParseVoskResult(result);
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        _lastRecognizedText = text;
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        Console.WriteLine($"       [Heard: \"{text}\"]");
+                        Console.ResetColor();
+                        _recognitionComplete.Set();
+                    }
+                }
+                else
+                {
+                    var partial = _voskRecognizer.PartialResult();
+                    var text = ParseVoskPartial(partial);
+                    if (!string.IsNullOrWhiteSpace(text) && text.Length > 3)
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkCyan;
+                        Console.Write($"\r       [... {text}]".PadRight(60));
+                        Console.ResetColor();
+                    }
+                }
+            }
+        }
+
+        static string ParseVoskResult(string json)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("text", out var textElement))
+                {
+                    return textElement.GetString() ?? "";
+                }
+            }
+            catch { }
+            return "";
+        }
+
+        static string ParseVoskPartial(string json)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("partial", out var textElement))
+                {
+                    return textElement.GetString() ?? "";
+                }
+            }
+            catch { }
+            return "";
+        }
+
+        static string? ListenForSpeech(int timeoutMs)
+        {
+            if (_voskRecognizer == null || _waveIn == null)
+                return null;
+
+            _recognitionComplete.Reset();
+            _lastRecognizedText = "";
+
+            StartListening();
+
+            if (_recognitionComplete.WaitOne(timeoutMs))
+            {
+                return _lastRecognizedText;
+            }
+
+            return null;
         }
 
         static void RunFlowTrainer()
         {
             int currentFlowIndex = 0;
-            
+
             while (currentFlowIndex < _flows.Count)
             {
                 var flow = _flows[currentFlowIndex];
-                
-                // Visa nästa flow och vänta på aktivering
+
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine($"\n{'═'.ToString().PadRight(60, '═')}");
                 Console.WriteLine($"  NEXT FLOW: {flow.Name}");
@@ -223,28 +287,26 @@ namespace A320FlowTrainer
                 Console.WriteLine($"{'═'.ToString().PadRight(60, '═')}");
                 Console.ResetColor();
                 Console.WriteLine("\n  Say the flow name to begin...\n");
-                
-                // Vänta på flow-aktivering
+
                 var activationResult = WaitForFlowActivation(flow);
-                
+
                 if (activationResult == ActivationResult.Quit)
                     break;
-                
+
                 if (activationResult == ActivationResult.Skip)
                 {
                     currentFlowIndex++;
                     continue;
                 }
-                
-                // Kör flow
+
                 var flowResult = RunFlow(flow);
-                
+
                 if (flowResult == FlowResult.Quit)
                     break;
-                
+
                 currentFlowIndex++;
             }
-            
+
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("\n\n  ALL FLOWS COMPLETE! Great job!\n");
             Console.ResetColor();
@@ -252,6 +314,8 @@ namespace A320FlowTrainer
 
         static ActivationResult WaitForFlowActivation(Flow flow)
         {
+            StartListening();
+
             while (true)
             {
                 if (Console.KeyAvailable)
@@ -264,20 +328,21 @@ namespace A320FlowTrainer
                     if (key.Key == ConsoleKey.Enter)
                         return ActivationResult.Activated;
                 }
-                
+
                 if (!_useTextFallback)
                 {
                     var input = ListenForSpeech(2000);
                     if (input != null && IsFlowMatch(input, flow))
                     {
+                        Console.WriteLine(); // Ny rad efter partial
                         Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine($"  ✓ Recognized: \"{input}\"");
                         Console.ResetColor();
                         return ActivationResult.Activated;
                     }
                 }
-                
-                Thread.Sleep(100);
+
+                Thread.Sleep(50);
             }
         }
 
@@ -285,24 +350,28 @@ namespace A320FlowTrainer
         {
             var flowNameLower = flow.Name.ToLower();
             var inputLower = input.ToLower();
-            
-            // Exakt match
+
             if (flowNameLower.Contains(inputLower) || inputLower.Contains(flowNameLower))
                 return true;
-            
-            // Match utan "flows"
+
             var simplified = flowNameLower.Replace(" flows", "").Replace("flows", "").Trim();
             if (inputLower.Contains(simplified) || simplified.Contains(inputLower))
                 return true;
-            
-            // Fuzzy: minst 60% av orden matchar
-            var flowWords = flowNameLower.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var inputWords = inputLower.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            
-            int matches = flowWords.Count(fw => inputWords.Any(iw => 
-                fw.Contains(iw) || iw.Contains(fw)));
-            
-            return matches >= flowWords.Length * 0.6;
+
+            var flowWords = flowNameLower
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Where(w => w != "flows" && w.Length > 3)
+                .ToList();
+
+            foreach (var fw in flowWords)
+            {
+                if (inputLower.Contains(fw))
+                    return true;
+                if (fw.Length > 5 && inputLower.Contains(fw.Substring(0, 5)))
+                    return true;
+            }
+
+            return false;
         }
 
         static FlowResult RunFlow(Flow flow)
@@ -310,17 +379,14 @@ namespace A320FlowTrainer
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine($"\n  ▶ Starting: {flow.Name}\n");
             Console.ResetColor();
-            
-            // Spela flow-start ljud
+
             PlayFlowStartAudio(flow);
-            
             Thread.Sleep(500);
-            
+
             for (int i = 0; i < flow.Items.Count; i++)
             {
                 var item = flow.Items[i];
-                
-                // Visa item
+
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.Write($"  {i + 1,2}. ");
                 Console.ForegroundColor = ConsoleColor.Cyan;
@@ -330,42 +396,39 @@ namespace A320FlowTrainer
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine(item.Response);
                 Console.ResetColor();
-                
-                // Spela upp ljud
+
                 PlayItemAudio(flow, i, item);
-                
-                // Vänta på bekräftelse
+
                 var confirmResult = WaitForConfirmation(item);
-                
+
                 if (confirmResult == ConfirmResult.Quit)
                     return FlowResult.Quit;
-                
+
                 if (confirmResult == ConfirmResult.Repeat)
                 {
-                    i--; // Upprepa samma item
+                    i--;
                     continue;
                 }
-                
-                // Visa bekräftelse
+
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine($"       ✓ Checked\n");
                 Console.ResetColor();
             }
-            
-            // Spela flow complete ljud
+
             PlayFlowCompleteAudio(flow);
-            
+
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"\n  ✓ {flow.Name} - COMPLETE\n");
             Console.ResetColor();
-            
+
             Thread.Sleep(1000);
-            
             return FlowResult.Completed;
         }
 
         static ConfirmResult WaitForConfirmation(FlowItem item)
         {
+            StartListening();
+
             while (true)
             {
                 if (Console.KeyAvailable)
@@ -378,21 +441,24 @@ namespace A320FlowTrainer
                     if (key.Key == ConsoleKey.Enter || key.Key == ConsoleKey.Spacebar)
                         return ConfirmResult.Confirmed;
                 }
-                
+
                 if (!_useTextFallback)
                 {
                     var input = ListenForSpeech(3000);
                     if (input != null)
                     {
                         if (IsConfirmation(input, item))
+                        {
+                            Console.WriteLine();
                             return ConfirmResult.Confirmed;
+                        }
                         if (input.Contains("repeat"))
                             return ConfirmResult.Repeat;
                         if (input.Contains("quit") || input.Contains("exit") || input.Contains("stop"))
                             return ConfirmResult.Quit;
                     }
                 }
-                
+
                 Thread.Sleep(50);
             }
         }
@@ -400,28 +466,55 @@ namespace A320FlowTrainer
         static bool IsConfirmation(string input, FlowItem? item = null)
         {
             var inputLower = input.ToLower();
-            
-            // Universella bekräftelser - alltid OK
-            var universalConfirms = new[] { "checked", "check", "confirmed", "set", "done", "yes", "next" };
+
+            // Inkludera varianter som Vosk ibland hör istället för "check"
+            var universalConfirms = new[] {
+                "checked", "check", "confirmed", "set", "done", "yes", "next", "correct", "okay", "ok", "bright",
+                "shaq", "shake", "czech", "jack", "chuck", "chick", "track"  // Vosk-varianter av "check"
+            };
             if (universalConfirms.Any(w => inputLower.Contains(w)))
                 return true;
-            
+
             if (item == null)
                 return false;
-            
+
             var responseLower = item.Response.ToLower();
-            
-            // För ON/OFF items - acceptera "on", "off", eller delar av item-namnet + on/off
+
             if (responseLower.Contains("on") && inputLower.Contains("on"))
                 return true;
             if (responseLower.Contains("off") && inputLower.Contains("off"))
                 return true;
-            
-            // För BRT/BRIGHT
+
+            // För items med siffror (inkl. flygradio-uttal)
+            var numberMatches = new Dictionary<string, string[]>
+            {
+                { "0", new[] { "zero", "0" } },
+                { "1", new[] { "one", "1", "wun" } },
+                { "2", new[] { "two", "2", "too" } },
+                { "3", new[] { "three", "3", "tree" } },
+                { "4", new[] { "four", "4", "fower" } },
+                { "5", new[] { "five", "5", "fife" } },
+                { "6", new[] { "six", "6" } },
+                { "7", new[] { "seven", "7" } },
+                { "8", new[] { "eight", "8", "ait" } },
+                { "9", new[] { "nine", "9", "niner" } },
+            };
+
+            foreach (var kvp in numberMatches)
+            {
+                if (responseLower.Contains(kvp.Key))
+                {
+                    if (kvp.Value.Any(v => inputLower.Contains(v)))
+                        return true;
+                }
+            }
+
+            if (responseLower.Contains("verify") && (inputLower.Contains("verify") || inputLower.Contains("verified")))
+                return true;
+
             if (responseLower.Contains("brt") && (inputLower.Contains("bright") || inputLower.Contains("brt")))
                 return true;
-            
-            // För specifika responses
+
             var responseMatches = new Dictionary<string, string[]>
             {
                 { "obtain", new[] { "obtained", "obtain" } },
@@ -447,7 +540,7 @@ namespace A320FlowTrainer
                 { "stabilized", new[] { "stabilized", "stable" } },
                 { "shutdown", new[] { "shutdown", "shut down" } },
             };
-            
+
             foreach (var kvp in responseMatches)
             {
                 if (responseLower.Contains(kvp.Key))
@@ -456,64 +549,32 @@ namespace A320FlowTrainer
                         return true;
                 }
             }
-            
-            return false;
-        }
 
-        static string? ListenForSpeech(int timeoutMs)
-        {
-            if (_recognizer == null)
-                return null;
-            
-            _recognitionComplete.Reset();
-            _lastRecognizedText = "";
-            
-            try
-            {
-                _recognizer.RecognizeAsync(RecognizeMode.Single);
-                
-                if (_recognitionComplete.WaitOne(timeoutMs))
-                {
-                    return _lastRecognizedText;
-                }
-                
-                _recognizer.RecognizeAsyncCancel();
-            }
-            catch
-            {
-                // Ignorera recognition errors
-            }
-            
-            return null;
+            return false;
         }
 
         static void PlayItemAudio(Flow flow, int itemIndex, FlowItem item)
         {
-            // Bygg filnamn (samma logik som Python-scriptet)
             var flowPart = System.Text.RegularExpressions.Regex.Replace(
                 flow.Name.ToLower(), @"[^a-z0-9]", "_");
             flowPart = System.Text.RegularExpressions.Regex.Replace(flowPart, @"_+", "_").Trim('_');
-            
+
             var itemPart = System.Text.RegularExpressions.Regex.Replace(
                 item.Item.ToLower(), @"[^a-z0-9]", "_");
             itemPart = System.Text.RegularExpressions.Regex.Replace(itemPart, @"_+", "_").Trim('_');
             if (itemPart.Length > 30) itemPart = itemPart.Substring(0, 30);
-            
+
             var filename = $"{flowPart}_{itemIndex:D2}_{itemPart}";
-            
-            // Försök hitta ljudfil (.wav eller .mp3)
+
             var wavPath = Path.Combine(_audioDir, filename + ".wav");
             var mp3Path = Path.Combine(_audioDir, filename + ".mp3");
-            
+
             if (File.Exists(wavPath))
                 PlayAudioFile(wavPath);
             else if (File.Exists(mp3Path))
                 PlayAudioFile(mp3Path);
             else
-            {
-                // Fallback: använd system TTS
                 SpeakText($"{item.Item}: {item.Response}");
-            }
         }
 
         static string GetFlowFilePrefix(Flow flow)
@@ -528,7 +589,7 @@ namespace A320FlowTrainer
             var prefix = GetFlowFilePrefix(flow);
             var wavPath = Path.Combine(_audioDir, $"{prefix}_start.wav");
             var mp3Path = Path.Combine(_audioDir, $"{prefix}_start.mp3");
-            
+
             if (File.Exists(wavPath))
                 PlayAudioFile(wavPath);
             else if (File.Exists(mp3Path))
@@ -542,7 +603,7 @@ namespace A320FlowTrainer
             var prefix = GetFlowFilePrefix(flow);
             var wavPath = Path.Combine(_audioDir, $"{prefix}_complete.wav");
             var mp3Path = Path.Combine(_audioDir, $"{prefix}_complete.mp3");
-            
+
             if (File.Exists(wavPath))
                 PlayAudioFile(wavPath);
             else if (File.Exists(mp3Path))
@@ -555,27 +616,31 @@ namespace A320FlowTrainer
         {
             try
             {
+                StopListening();
+                Thread.Sleep(100); // Låt mikrofonen tystna
+
                 using var player = new System.Media.SoundPlayer(path);
                 player.PlaySync();
+
+                Thread.Sleep(200); // Vänta så att ekot dör ut
             }
-            catch
-            {
-                // Om .wav inte fungerar, ignorera
-            }
+            catch { }
         }
 
         static void SpeakText(string text)
         {
             try
             {
+                StopListening();
+                Thread.Sleep(100);
+
                 using var synth = new SpeechSynthesizer();
                 synth.Rate = 1;
                 synth.Speak(text);
+
+                Thread.Sleep(200);
             }
-            catch
-            {
-                // Ignorera TTS errors
-            }
+            catch { }
         }
     }
 

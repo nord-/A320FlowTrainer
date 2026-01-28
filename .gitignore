@@ -30,3 +30,6 @@ Thumbs.db
 
 # Tools (Piper TTS etc)
 tools/
+
+# Vosk model (download separately)
+A320FlowTrainer/model/
