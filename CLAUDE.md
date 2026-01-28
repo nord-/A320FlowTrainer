@@ -51,6 +51,10 @@ python generate_audio_piper.py --model path/to/en_US-joe-medium.onnx
 - System.Speech NuGet package (recognition + synthesis)
 - System.Media.SoundPlayer (.wav playback)
 
+## Code Style
+
+- Använd spaces, inte tabs, för indentering
+
 ## Notes
 
 - Windows-only (kräver System.Speech)
