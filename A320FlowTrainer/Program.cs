@@ -24,6 +24,7 @@ namespace A320FlowTrainer
         static readonly object _recognitionLock = new();
         static ManualResetEvent _recognitionComplete = new(false);
         static bool _isListening = false;
+        static volatile bool _isShuttingDown = false;
 
         static void Main(string[] args)
         {
@@ -63,9 +64,16 @@ namespace A320FlowTrainer
             // Huvudloop
             RunFlowTrainer();
 
-            // Cleanup
+            // Cleanup - sätt flagga först så att callbacks slutar
+            _isShuttingDown = true;
             StopListening();
-            _voskRecognizer?.Dispose();
+            Thread.Sleep(200); // Vänta på att audio-tråden avslutas
+
+            lock (_recognitionLock)
+            {
+                _voskRecognizer?.Dispose();
+                _voskRecognizer = null;
+            }
             _voskModel?.Dispose();
         }
 
@@ -190,17 +198,24 @@ namespace A320FlowTrainer
         {
             if (_waveIn != null && _isListening)
             {
-                _waveIn.StopRecording();
+                try
+                {
+                    _waveIn.StopRecording();
+                }
+                catch { }
                 _isListening = false;
             }
         }
 
         static void OnAudioDataAvailable(object? sender, WaveInEventArgs e)
         {
-            if (_voskRecognizer == null) return;
+            if (_isShuttingDown || _voskRecognizer == null) return;
 
             lock (_recognitionLock)
             {
+                // Dubbelkolla efter att vi fått låset
+                if (_isShuttingDown || _voskRecognizer == null) return;
+
                 if (_voskRecognizer.AcceptWaveform(e.Buffer, e.BytesRecorded))
                 {
                     var result = _voskRecognizer.Result();
