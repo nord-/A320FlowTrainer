@@ -60,6 +60,7 @@ python generate_audio_piper.py --model path/to/en_US-joe-medium.onnx
 ## Code Style
 
 - Använd spaces, inte tabs, för indentering
+- Använd CRLF line endings (Windows-standard)
 
 ## Notes
 
