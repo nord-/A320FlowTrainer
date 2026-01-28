@@ -63,7 +63,7 @@
   },
   {
     "id": "cockpit_preparation_flows_6",
-    "text": "BATTERY: ON - CHECK VOLTAGE",
+    "text": "BATTERY: ON. CHECK VOLTAGE",
     "filename": "cockpit_preparation_flows_06_battery.wav",
     "flow": "COCKPIT PREPARATION FLOWS",
     "item": "BATTERY",
@@ -755,7 +755,7 @@
   },
   {
     "id": "before_take_off_flows_0",
-    "text": "T-CAS: T A, R A - TILT ABOVE",
+    "text": "T-CAS: T A, R A. TILT ABOVE",
     "filename": "before_take_off_flows_00_tcas.wav",
     "flow": "BEFORE TAKE OFF FLOWS",
     "item": "TCAS",

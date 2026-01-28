@@ -314,7 +314,10 @@ def expand_abbreviations(text):
     result = text
     for pattern, replacement in expansions.items():
         result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
-    
+
+    # Ersätt " - " med ". " för bättre TTS-pauser
+    result = result.replace(' - ', '. ')
+
     return result
 
 def generate_safe_filename(flow_name, index, item_name):
@@ -417,10 +420,10 @@ for af in audio_files[:15]:
     print(f"  {af['text']}")
 
 # Spara JSON-filer
-with open('/home/claude/flows.json', 'w', encoding='utf-8') as f:
+with open('flows.json', 'w', encoding='utf-8') as f:
     json.dump(flows, f, indent=2, ensure_ascii=False)
 
-with open('/home/claude/audio_files.json', 'w', encoding='utf-8') as f:
+with open('audio_files.json', 'w', encoding='utf-8') as f:
     json.dump(audio_files, f, indent=2, ensure_ascii=False)
 
 print("\n" + "=" * 60)
