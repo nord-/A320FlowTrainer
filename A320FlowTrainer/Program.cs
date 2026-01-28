@@ -755,6 +755,13 @@ namespace A320FlowTrainer
                 }
             }
 
+            // Kolla item-namnet också (inte bara response)
+            var itemLower = item.Item.ToLower();
+
+            // "CLEARANCE" accepterar allt med "clear" (clearance, cleared, clear) eller "approved"
+            if (itemLower.Contains("clearance") && (inputLower.Contains("clear") || inputLower.Contains("approved")))
+                return true;
+
             return false;
         }
 
