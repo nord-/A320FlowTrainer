@@ -125,15 +125,18 @@ namespace A320FlowTrainer
 
         static void PrintHeader()
         {
+            const int boxWidth = 56;
+            string Border(string text) => $"  ║ {text.PadRight(boxWidth - 2)} ║";
+
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine(@"
-╔═══════════════════════════════════════════════════════════╗
-║           AIRBUS A320/321 FLOW TRAINER                   ║
-║                                                           ║
-║  Say the flow name to start. Say 'CHECKED' after items.  ║
-║  Press ESC to quit, F1 for help.                         ║
-╚═══════════════════════════════════════════════════════════╝
-");
+            Console.WriteLine();
+            Console.WriteLine($"  ╔{new string('═', boxWidth)}╗");
+            Console.WriteLine(Border("AIRBUS A320/321 FLOW TRAINER".PadLeft(28 + 14)));
+            Console.WriteLine(Border(""));
+            Console.WriteLine(Border("Say flow name to start, say 'CHECKED' to confirm."));
+            Console.WriteLine(Border("Press ESC to quit."));
+            Console.WriteLine($"  ╚{new string('═', boxWidth)}╝");
+            Console.WriteLine();
             if (_testMode)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
