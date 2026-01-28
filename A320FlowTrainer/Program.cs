@@ -30,6 +30,13 @@ namespace A320FlowTrainer
             Console.Title = "A320 Flow Trainer";
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
+            // Öka bufferstorleken för långa flows
+            try
+            {
+                Console.BufferHeight = Math.Max(Console.BufferHeight, 200);
+            }
+            catch { /* Ignorera om det inte går */ }
+
             PrintHeader();
             ShowAudioDevices();
 
@@ -201,21 +208,7 @@ namespace A320FlowTrainer
                     if (!string.IsNullOrWhiteSpace(text))
                     {
                         _lastRecognizedText = text;
-                        Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.WriteLine($"       [Heard: \"{text}\"]");
-                        Console.ResetColor();
                         _recognitionComplete.Set();
-                    }
-                }
-                else
-                {
-                    var partial = _voskRecognizer.PartialResult();
-                    var text = ParseVoskPartial(partial);
-                    if (!string.IsNullOrWhiteSpace(text) && text.Length > 3)
-                    {
-                        Console.ForegroundColor = ConsoleColor.DarkCyan;
-                        Console.Write($"\r       [... {text}]".PadRight(60));
-                        Console.ResetColor();
                     }
                 }
             }
@@ -334,10 +327,6 @@ namespace A320FlowTrainer
                     var input = ListenForSpeech(2000);
                     if (input != null && IsFlowMatch(input, flow))
                     {
-                        Console.WriteLine(); // Ny rad efter partial
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine($"  ✓ Recognized: \"{input}\"");
-                        Console.ResetColor();
                         return ActivationResult.Activated;
                     }
                 }
@@ -374,32 +363,46 @@ namespace A320FlowTrainer
             return false;
         }
 
+        static string[] _itemStatus = Array.Empty<string>();
+        static int _visibleItems;
+        static int _windowStart;
+
         static FlowResult RunFlow(Flow flow)
         {
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"\n  ▶ Starting: {flow.Name}\n");
-            Console.ResetColor();
+            Console.Clear();
 
+            // Beräkna hur många items som får plats (lämna plats för header + status)
+            _visibleItems = Math.Min(Console.WindowHeight - 5, flow.Items.Count);
+            _windowStart = 0;
+            _itemStatus = new string[flow.Items.Count];
+
+            for (int i = 0; i < flow.Items.Count; i++)
+                _itemStatus[i] = "   ";
+
+            DrawFlowView(flow, -1);
             PlayFlowStartAudio(flow);
-            Thread.Sleep(500);
 
             for (int i = 0; i < flow.Items.Count; i++)
             {
                 var item = flow.Items[i];
 
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.Write($"  {i + 1,2}. ");
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.Write(item.Item);
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.Write(" → ");
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine(item.Response);
-                Console.ResetColor();
+                // Scrolla fönstret om nödvändigt
+                if (i >= _windowStart + _visibleItems)
+                {
+                    _windowStart = i - _visibleItems + 1;
+                }
+                else if (i < _windowStart)
+                {
+                    _windowStart = i;
+                }
+
+                // Markera aktiv item
+                _itemStatus[i] = " ► ";
+                DrawFlowView(flow, i);
 
                 PlayItemAudio(flow, i, item);
 
-                var confirmResult = WaitForConfirmation(item);
+                var (confirmResult, heardText) = WaitForConfirmationWithText(item, flow);
 
                 if (confirmResult == ConfirmResult.Quit)
                     return FlowResult.Quit;
@@ -410,22 +413,112 @@ namespace A320FlowTrainer
                     continue;
                 }
 
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"       ✓ Checked\n");
-                Console.ResetColor();
+                // Markera klar
+                _itemStatus[i] = " ✓ ";
             }
 
+            DrawFlowView(flow, -1, "✓ COMPLETE");
             PlayFlowCompleteAudio(flow);
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"\n  ✓ {flow.Name} - COMPLETE\n");
-            Console.ResetColor();
-
             Thread.Sleep(1000);
             return FlowResult.Completed;
         }
 
-        static ConfirmResult WaitForConfirmation(FlowItem item)
+        static void DrawFlowView(Flow flow, int activeIndex, string? statusText = null)
+        {
+            // Dölj cursor under ritning för att undvika flimmer
+            Console.CursorVisible = false;
+            Console.SetCursorPosition(0, 0);
+
+            int width = Console.WindowWidth;
+
+            // Header
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            ClearAndWrite($"  ▶ {flow.Name}", width);
+
+            // Progress
+            int completed = _itemStatus.Count(s => s == " ✓ ");
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            ClearAndWrite($"  [{completed}/{flow.Items.Count}] " + new string('─', 50), width);
+            Console.ResetColor();
+
+            // Items i fönstret
+            for (int i = 0; i < _visibleItems; i++)
+            {
+                int itemIndex = _windowStart + i;
+                if (itemIndex < flow.Items.Count)
+                {
+                    PrintFlowItem(itemIndex, flow.Items[itemIndex], itemIndex == activeIndex, width);
+                }
+                else
+                {
+                    ClearAndWrite("", width);
+                }
+            }
+
+            // Scroll-indikatorer
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            if (_windowStart > 0)
+                ClearAndWrite($"  ↑ {_windowStart} more above", width);
+            else
+                ClearAndWrite("", width);
+
+            int remaining = flow.Items.Count - (_windowStart + _visibleItems);
+            if (remaining > 0)
+                ClearAndWrite($"  ↓ {remaining} more below", width);
+            else
+                ClearAndWrite("", width);
+
+            // Statusrad
+            Console.ForegroundColor = statusText != null && statusText.StartsWith("✓") ? ConsoleColor.Green : ConsoleColor.DarkGray;
+            ClearAndWrite($"  {statusText ?? "[Listening...]"}", width);
+            Console.ResetColor();
+            Console.CursorVisible = true;
+        }
+
+        static void ClearAndWrite(string text, int width)
+        {
+            if (text.Length >= width)
+                text = text.Substring(0, width - 1);
+            Console.Write(text);
+            Console.WriteLine(new string(' ', Math.Max(0, width - text.Length - 1)));
+        }
+
+        static void PrintFlowItem(int index, FlowItem item, bool isActive, int width)
+        {
+            string status = _itemStatus[index];
+
+            // Rensa raden först genom att skriva spaces
+            string clearLine = new string(' ', width - 1);
+            Console.Write("\r" + clearLine + "\r");
+
+            // Skriv med färger
+            Console.ForegroundColor = status == " ✓ " ? ConsoleColor.Green :
+                                      isActive ? ConsoleColor.Yellow : ConsoleColor.DarkGray;
+            Console.Write($" {status}");
+
+            Console.ForegroundColor = isActive ? ConsoleColor.White : ConsoleColor.Gray;
+            Console.Write($"{index + 1,2}. ");
+
+            Console.ForegroundColor = isActive ? ConsoleColor.Cyan : ConsoleColor.DarkCyan;
+            Console.Write(item.Item);
+
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.Write(" → ");
+
+            Console.ForegroundColor = isActive ? ConsoleColor.White : ConsoleColor.Gray;
+            string response = item.Response;
+
+            // Beräkna använd bredd: " " + status(3) + nummer(2) + ". "(2) + item + " → "(3) + response
+            int usedSoFar = 1 + 3 + 2 + 2 + item.Item.Length + 3;
+            int remainingWidth = width - usedSoFar - 1;
+            if (response.Length > remainingWidth && remainingWidth > 3)
+                response = response.Substring(0, remainingWidth - 3) + "...";
+
+            Console.WriteLine(response);
+            Console.ResetColor();
+        }
+
+        static (ConfirmResult result, string heardText) WaitForConfirmationWithText(FlowItem item, Flow flow)
         {
             StartListening();
 
@@ -435,11 +528,11 @@ namespace A320FlowTrainer
                 {
                     var key = Console.ReadKey(true);
                     if (key.Key == ConsoleKey.Escape)
-                        return ConfirmResult.Quit;
+                        return (ConfirmResult.Quit, "");
                     if (key.Key == ConsoleKey.R)
-                        return ConfirmResult.Repeat;
+                        return (ConfirmResult.Repeat, "");
                     if (key.Key == ConsoleKey.Enter || key.Key == ConsoleKey.Spacebar)
-                        return ConfirmResult.Confirmed;
+                        return (ConfirmResult.Confirmed, "[key]");
                 }
 
                 if (!_useTextFallback)
@@ -447,15 +540,16 @@ namespace A320FlowTrainer
                     var input = ListenForSpeech(3000);
                     if (input != null)
                     {
+                        // Visa vad vi hörde
+                        int activeIdx = Array.IndexOf(_itemStatus, " ► ");
+                        DrawFlowView(flow, activeIdx, $"Heard: \"{input}\"");
+
                         if (IsConfirmation(input, item))
-                        {
-                            Console.WriteLine();
-                            return ConfirmResult.Confirmed;
-                        }
+                            return (ConfirmResult.Confirmed, input);
                         if (input.Contains("repeat"))
-                            return ConfirmResult.Repeat;
+                            return (ConfirmResult.Repeat, input);
                         if (input.Contains("quit") || input.Contains("exit") || input.Contains("stop"))
-                            return ConfirmResult.Quit;
+                            return (ConfirmResult.Quit, input);
                     }
                 }
 
@@ -482,7 +576,11 @@ namespace A320FlowTrainer
 
             if (responseLower.Contains("on") && inputLower.Contains("on"))
                 return true;
-            if (responseLower.Contains("off") && inputLower.Contains("off"))
+            if (responseLower.Contains("off") && (inputLower.Contains("off") || inputLower.Contains(" of") || inputLower.EndsWith(" of")))
+                return true;
+            if (responseLower.Contains("down") && inputLower.Contains("down"))
+                return true;
+            if (responseLower.Contains("up") && inputLower.Contains(" up"))
                 return true;
 
             // För items med siffror (inkl. flygradio-uttal)
