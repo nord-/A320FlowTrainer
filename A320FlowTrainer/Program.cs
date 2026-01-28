@@ -25,10 +25,15 @@ namespace A320FlowTrainer
         static ManualResetEvent _recognitionComplete = new(false);
         static bool _isListening = false;
         static volatile bool _isShuttingDown = false;
+        static bool _testMode = false;
+        static Random _random = new();
 
         static void Main(string[] args)
         {
-            Console.Title = "A320 Flow Trainer";
+            // Parsa command line
+            _testMode = args.Contains("--test") || args.Contains("-t");
+
+            Console.Title = "A320 Flow Trainer" + (_testMode ? " [TEST MODE]" : "");
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
             // Öka bufferstorleken för långa flows
@@ -123,6 +128,11 @@ namespace A320FlowTrainer
 ║  Press ESC to quit, F1 for help.                         ║
 ╚═══════════════════════════════════════════════════════════╝
 ");
+            if (_testMode)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("  ⚠ TEST MODE: Only 3 random items per flow (--test)\n");
+            }
             Console.ResetColor();
         }
 
@@ -283,6 +293,7 @@ namespace A320FlowTrainer
             {
                 var flow = _flows[currentFlowIndex];
 
+                Console.Clear();
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine($"\n{'═'.ToString().PadRight(60, '═')}");
                 Console.WriteLine($"  NEXT FLOW: {flow.Name}");
@@ -322,7 +333,11 @@ namespace A320FlowTrainer
 
         static ActivationResult WaitForFlowActivation(Flow flow)
         {
+            // Säkerställ att vi lyssnar
             StartListening();
+
+            // Spara cursor-position för feedback
+            int feedbackLine = Console.CursorTop;
 
             while (true)
             {
@@ -340,9 +355,23 @@ namespace A320FlowTrainer
                 if (!_useTextFallback)
                 {
                     var input = ListenForSpeech(2000);
-                    if (input != null && IsFlowMatch(input, flow))
+                    if (input != null)
                     {
-                        return ActivationResult.Activated;
+                        var (isMatch, score, details) = IsFlowMatchWithScore(input, flow);
+
+                        // Visa vad vi hörde med poäng
+                        Console.SetCursorPosition(0, feedbackLine);
+                        Console.ForegroundColor = score >= 50 ? ConsoleColor.Yellow : ConsoleColor.DarkGray;
+                        Console.Write($"  Heard: \"{input}\" → {score}% {details}".PadRight(70));
+                        Console.ResetColor();
+
+                        if (isMatch)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine($"\r  ✓ Matched: \"{input}\" ({score}%)".PadRight(70));
+                            Console.ResetColor();
+                            return ActivationResult.Activated;
+                        }
                     }
                 }
 
@@ -350,32 +379,59 @@ namespace A320FlowTrainer
             }
         }
 
-        static bool IsFlowMatch(string input, Flow flow)
+        static (bool isMatch, int score, string details) IsFlowMatchWithScore(string input, Flow flow)
         {
             var flowNameLower = flow.Name.ToLower();
             var inputLower = input.ToLower();
 
+            // Exakt match
             if (flowNameLower.Contains(inputLower) || inputLower.Contains(flowNameLower))
-                return true;
+                return (true, 100, "exact");
 
-            var simplified = flowNameLower.Replace(" flows", "").Replace("flows", "").Trim();
-            if (inputLower.Contains(simplified) || simplified.Contains(inputLower))
-                return true;
+            // Jämför utan mellanslag (t.ex. "fm gs set up" → "fmgssetup" matchar "fmgs setup")
+            var flowNoSpaces = flowNameLower.Replace(" ", "").Replace("flows", "");
+            var inputNoSpaces = inputLower.Replace(" ", "");
+            if (flowNoSpaces.Contains(inputNoSpaces) || inputNoSpaces.Contains(flowNoSpaces))
+                return (true, 95, "no-space");
 
-            var flowWords = flowNameLower
-                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                .Where(w => w != "flows" && w.Length > 3)
-                .ToList();
+            // Ordbaserad poäng: hur många input-ord finns i flow-namnet?
+            var inputWords = inputLower.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var flowText = flowNameLower.Replace("flows", "");
+            int matchedWords = 0;
+            var matchedList = new List<string>();
 
-            foreach (var fw in flowWords)
+            foreach (var word in inputWords)
             {
-                if (inputLower.Contains(fw))
-                    return true;
-                if (fw.Length > 5 && inputLower.Contains(fw.Substring(0, 5)))
-                    return true;
+                if (word.Length < 2) continue;
+
+                if (flowText.Contains(word))
+                {
+                    matchedWords++;
+                    matchedList.Add(word);
+                }
+                // Kolla om ordet är en del av ett sammansatt ord (t.ex. "fm" i "fmgs")
+                else if (flowNoSpaces.Contains(word))
+                {
+                    matchedWords++;
+                    matchedList.Add($"{word}*");
+                }
             }
 
-            return false;
+            int totalWords = inputWords.Count(w => w.Length >= 2);
+            int score = totalWords > 0 ? (matchedWords * 100) / totalWords : 0;
+            string details = matchedList.Count > 0
+                ? $"{matchedWords}/{totalWords} [{string.Join(",", matchedList)}]"
+                : $"0/{totalWords}";
+
+            // Kräv minst 50% träff och minst 2 ord
+            bool isMatch = score >= 50 && matchedWords >= 2;
+
+            return (isMatch, score, details);
+        }
+
+        static bool IsFlowMatch(string input, Flow flow)
+        {
+            return IsFlowMatchWithScore(input, flow).isMatch;
         }
 
         static string[] _itemStatus = Array.Empty<string>();
@@ -386,19 +442,35 @@ namespace A320FlowTrainer
         {
             Console.Clear();
 
+            // I testläge, välj 3 slumpvisa items
+            List<int> itemsToRun;
+            if (_testMode && flow.Items.Count > 3)
+            {
+                itemsToRun = Enumerable.Range(0, flow.Items.Count)
+                    .OrderBy(_ => _random.Next())
+                    .Take(3)
+                    .OrderBy(i => i)  // Kör i ordning
+                    .ToList();
+            }
+            else
+            {
+                itemsToRun = Enumerable.Range(0, flow.Items.Count).ToList();
+            }
+
             // Beräkna hur många items som får plats (lämna plats för header + status)
             _visibleItems = Math.Min(Console.WindowHeight - 5, flow.Items.Count);
             _windowStart = 0;
             _itemStatus = new string[flow.Items.Count];
 
             for (int i = 0; i < flow.Items.Count; i++)
-                _itemStatus[i] = "   ";
+                _itemStatus[i] = _testMode && !itemsToRun.Contains(i) ? " · " : "   ";
 
             DrawFlowView(flow, -1);
             PlayFlowStartAudio(flow);
 
-            for (int i = 0; i < flow.Items.Count; i++)
+            for (int runIdx = 0; runIdx < itemsToRun.Count; runIdx++)
             {
+                int i = itemsToRun[runIdx];
                 var item = flow.Items[i];
 
                 // Scrolla fönstret om nödvändigt
@@ -424,7 +496,7 @@ namespace A320FlowTrainer
 
                 if (confirmResult == ConfirmResult.Repeat)
                 {
-                    i--;
+                    runIdx--;
                     continue;
                 }
 
@@ -435,7 +507,27 @@ namespace A320FlowTrainer
             DrawFlowView(flow, -1, "✓ COMPLETE");
             PlayFlowCompleteAudio(flow);
             Thread.Sleep(1000);
+
+            // Rensa Vosk-buffern innan nästa flow
+            ResetVoskState();
+
             return FlowResult.Completed;
+        }
+
+        static void ResetVoskState()
+        {
+            if (_voskRecognizer == null) return;
+
+            lock (_recognitionLock)
+            {
+                if (_voskRecognizer != null)
+                {
+                    // Töm eventuell buffrad data
+                    _voskRecognizer.FinalResult();
+                    _recognitionComplete.Reset();
+                    _lastRecognizedText = "";
+                }
+            }
         }
 
         static void DrawFlowView(Flow flow, int activeIndex, string? statusText = null)
