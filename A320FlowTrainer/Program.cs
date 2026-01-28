@@ -670,103 +670,119 @@ namespace A320FlowTrainer
             }
         }
 
+        // Ord som alltid accepteras som bekräftelse
+        static readonly string[] _universalConfirms = {
+            "checked", "check", "confirmed", "set", "done", "yes", "next", "correct", "okay", "ok",
+            "shaq", "shake", "czech", "jack", "chuck", "chick", "track"  // Vosk-varianter av "check"
+        };
+
+        // Vanliga tillstånd (för "AS RQRD" och liknande)
+        static readonly string[] _stateWords = {
+            "on", "off", "set", "selected", "auto", "manual", "normal", "norm",
+            "open", "closed", "required", "not required", "bright", "dim"
+        };
+
+        // Trigger i response/item → godkända input-ord
+        static readonly Dictionary<string, string[]> _wordMatches = new()
+        {
+            // Tillstånd (matchar sig själva)
+            { "on", new[] { "on" } },
+            { "off", new[] { "off" } },
+            { "down", new[] { "down" } },
+            { "up", new[] { "up" } },
+
+            // Förkortningar
+            { "brt", new[] { "bright", "brt" } },
+            { "stby", new[] { "standby" } },
+            { "norm", new[] { "normal", "norm" } },
+
+            // Verb/åtgärder
+            { "obtain", new[] { "obtained", "obtain" } },
+            { "removed", new[] { "removed", "remove" } },
+            { "closed", new[] { "closed", "close" } },
+            { "received", new[] { "received", "receive" } },
+            { "monitor", new[] { "monitoring", "monitor" } },
+            { "armed", new[] { "armed", "arm" } },
+            { "disarm", new[] { "disarmed", "disarm" } },
+            { "retract", new[] { "retracted", "retract" } },
+            { "released", new[] { "released", "release" } },
+            { "stowed", new[] { "stowed", "stow" } },
+            { "start", new[] { "start", "started", "starting" } },
+            { "press", new[] { "pressed", "press" } },
+            { "select", new[] { "selected", "select" } },
+            { "verify", new[] { "verified", "verify" } },
+            { "aligned", new[] { "aligned", "align" } },
+            { "stabilized", new[] { "stabilized", "stable" } },
+            { "shutdown", new[] { "shutdown", "shut down" } },
+
+            // Substantiv
+            { "idle", new[] { "idle" } },
+            { "max", new[] { "max", "maximum" } },
+            { "standby", new[] { "standby" } },
+
+            // Siffror (inkl. flygradio-uttal)
+            { "0", new[] { "zero", "0" } },
+            { "1", new[] { "one", "1", "wun" } },
+            { "2", new[] { "two", "2", "too" } },
+            { "3", new[] { "three", "3", "tree" } },
+            { "4", new[] { "four", "4", "fower" } },
+            { "5", new[] { "five", "5", "fife" } },
+            { "6", new[] { "six", "6" } },
+            { "7", new[] { "seven", "7" } },
+            { "8", new[] { "eight", "8", "ait" } },
+            { "9", new[] { "nine", "9", "niner" } },
+        };
+
+        // Trigger i item-namn → godkända input-ord
+        static readonly Dictionary<string, string[]> _itemMatches = new()
+        {
+            { "clearance", new[] { "clear", "clearance", "cleared", "approved" } },
+            { "communication", new[] { "communication", "established", "contact" } },
+        };
+
         static bool IsConfirmation(string input, FlowItem? item = null)
         {
             var inputLower = input.ToLower();
 
-            // Inkludera varianter som Vosk ibland hör istället för "check"
-            var universalConfirms = new[] {
-                "checked", "check", "confirmed", "set", "done", "yes", "next", "correct", "okay", "ok", "bright",
-                "shaq", "shake", "czech", "jack", "chuck", "chick", "track"  // Vosk-varianter av "check"
-            };
-            if (universalConfirms.Any(w => inputLower.Contains(w)))
+            // Normalisera vanliga Vosk-feltolkningar
+            inputLower = System.Text.RegularExpressions.Regex.Replace(inputLower, @"\bof\b", "off");
+
+            // Universella bekräftelser
+            if (_universalConfirms.Any(w => inputLower.Contains(w)))
                 return true;
 
             if (item == null)
                 return false;
 
             var responseLower = item.Response.ToLower();
-
-            if (responseLower.Contains("on") && inputLower.Contains("on"))
-                return true;
-            if (responseLower.Contains("off") && (inputLower.Contains("off") || inputLower.Contains(" of") || inputLower.EndsWith(" of")))
-                return true;
-            if (responseLower.Contains("down") && inputLower.Contains("down"))
-                return true;
-            if (responseLower.Contains("up") && inputLower.Contains(" up"))
-                return true;
-
-            // För items med siffror (inkl. flygradio-uttal)
-            var numberMatches = new Dictionary<string, string[]>
-            {
-                { "0", new[] { "zero", "0" } },
-                { "1", new[] { "one", "1", "wun" } },
-                { "2", new[] { "two", "2", "too" } },
-                { "3", new[] { "three", "3", "tree" } },
-                { "4", new[] { "four", "4", "fower" } },
-                { "5", new[] { "five", "5", "fife" } },
-                { "6", new[] { "six", "6" } },
-                { "7", new[] { "seven", "7" } },
-                { "8", new[] { "eight", "8", "ait" } },
-                { "9", new[] { "nine", "9", "niner" } },
-            };
-
-            foreach (var kvp in numberMatches)
-            {
-                if (responseLower.Contains(kvp.Key))
-                {
-                    if (kvp.Value.Any(v => inputLower.Contains(v)))
-                        return true;
-                }
-            }
-
-            if (responseLower.Contains("verify") && (inputLower.Contains("verify") || inputLower.Contains("verified")))
-                return true;
-
-            if (responseLower.Contains("brt") && (inputLower.Contains("bright") || inputLower.Contains("brt")))
-                return true;
-
-            var responseMatches = new Dictionary<string, string[]>
-            {
-                { "obtain", new[] { "obtained", "obtain" } },
-                { "removed", new[] { "removed", "remove" } },
-                { "closed", new[] { "closed", "close" } },
-                { "received", new[] { "received", "receive" } },
-                { "monitor", new[] { "monitoring", "monitor" } },
-                { "armed", new[] { "armed", "arm" } },
-                { "disarm", new[] { "disarmed", "disarm" } },
-                { "retract", new[] { "retracted", "retract" } },
-                { "released", new[] { "released", "release" } },
-                { "stowed", new[] { "stowed", "stow" } },
-                { "idle", new[] { "idle" } },
-                { "max", new[] { "max", "maximum" } },
-                { "norm", new[] { "normal", "norm" } },
-                { "standby", new[] { "standby" } },
-                { "stby", new[] { "standby" } },
-                { "start", new[] { "start", "started", "starting" } },
-                { "press", new[] { "pressed", "press" } },
-                { "select", new[] { "selected", "select" } },
-                { "verify", new[] { "verified", "verify" } },
-                { "aligned", new[] { "aligned", "align" } },
-                { "stabilized", new[] { "stabilized", "stable" } },
-                { "shutdown", new[] { "shutdown", "shut down" } },
-            };
-
-            foreach (var kvp in responseMatches)
-            {
-                if (responseLower.Contains(kvp.Key))
-                {
-                    if (kvp.Value.Any(v => inputLower.Contains(v)))
-                        return true;
-                }
-            }
-
-            // Kolla item-namnet också (inte bara response)
             var itemLower = item.Item.ToLower();
 
-            // "CLEARANCE" accepterar allt med "clear" (clearance, cleared, clear) eller "approved"
-            if (itemLower.Contains("clearance") && (inputLower.Contains("clear") || inputLower.Contains("approved")))
-                return true;
+            // Kolla response mot _wordMatches
+            foreach (var kvp in _wordMatches)
+            {
+                if (responseLower.Contains(kvp.Key))
+                {
+                    if (kvp.Value.Any(v => inputLower.Contains(v)))
+                        return true;
+                }
+            }
+
+            // Kolla item-namn mot _itemMatches
+            foreach (var kvp in _itemMatches)
+            {
+                if (itemLower.Contains(kvp.Key))
+                {
+                    if (kvp.Value.Any(v => inputLower.Contains(v)))
+                        return true;
+                }
+            }
+
+            // "AS RQRD" accepterar alla tillståndsord
+            if (responseLower.Contains("rqrd") || responseLower.Contains("required"))
+            {
+                if (_stateWords.Any(s => inputLower.Contains(s)))
+                    return true;
+            }
 
             return false;
         }
