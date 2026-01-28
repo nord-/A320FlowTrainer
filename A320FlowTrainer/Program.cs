@@ -736,7 +736,7 @@ namespace A320FlowTrainer
         // Trigger i item-namn → godkända input-ord
         static readonly Dictionary<string, string[]> _itemMatches = new()
         {
-            { "clearance", new[] { "clear", "clearance", "cleared", "approved" } },
+            { "clearance", new[] { "clear", "clearance", "cleared", "approved", "received" } },
             { "communication", new[] { "communication", "established", "contact" } },
         };
 
