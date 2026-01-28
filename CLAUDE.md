@@ -23,15 +23,17 @@ dotnet publish -c Release -r win-x64 --self-contained
 ## Audio Generation
 
 ```bash
+# Python (full path om ej i PATH)
+"C:\Users\RickardNord\AppData\Local\Programs\Python\Python312\python.exe"
+
 # Uppdatera audio_files.json efter ändringar i flows
 python parse_flows_v2.py
 
-# Generera ljud med Google TTS
-pip install gtts
-python generate_audio_gtts.py
+# Generera ljud med Piper TTS
+"D:\prj\A320Flows\tools\piper\piper.exe" --model "D:\prj\A320Flows\tools\piper\en_US-joe-medium.onnx"
 
-# Eller med Piper TTS (bättre kvalitet)
-python generate_audio_piper.py --model path/to/en_US-joe-medium.onnx
+# Eller kör scriptet
+python generate_audio_piper.py --model tools/piper/en_US-joe-medium.onnx
 ```
 
 ## Architecture
@@ -68,3 +70,9 @@ python generate_audio_piper.py --model path/to/en_US-joe-medium.onnx
 - Vosk för röstigenkänning (offline, bättre än Windows Speech Recognition)
 - Fallback till Windows TTS om ljudfiler saknas
 - Fallback till tangentbord om Vosk-modell saknas
+
+## Workflow Preferences
+
+- Commita direkt utan att fråga om commit-meddelande (skriv lämpligt meddelande själv)
+- Bygg alltid efter kodändringar för att verifiera
+- flows.json och audio/ kopieras automatiskt till output vid build
