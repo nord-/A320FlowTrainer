@@ -27,6 +27,7 @@ namespace A320FlowTrainer
         static volatile bool _isShuttingDown = false;
         static bool _testMode = false;
         static Random _random = new();
+        static bool _isPaused = false;
 
         static void Main(string[] args)
         {
@@ -134,7 +135,7 @@ namespace A320FlowTrainer
             Console.WriteLine(Border("AIRBUS A320/321 FLOW TRAINER".PadLeft(28 + 14)));
             Console.WriteLine(Border(""));
             Console.WriteLine(Border("Say flow name to start, say 'CHECKED' to confirm."));
-            Console.WriteLine(Border("Press ESC to quit."));
+            Console.WriteLine(Border("Press SPACE to pause/resume, ESC to quit."));
             Console.WriteLine($"  ╚{new string('═', boxWidth)}╝");
             Console.WriteLine();
             if (_testMode)
@@ -314,7 +315,10 @@ namespace A320FlowTrainer
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine($"{'═'.ToString().PadRight(60, '═')}");
                 Console.ResetColor();
-                Console.WriteLine("\n  Say the flow name to begin...\n");
+                Console.WriteLine("\n  Say the flow name to begin…\n");
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.Write("  🎧 LISTENING - press «space» to pause".PadRight(70));
+                Console.ResetColor();
 
                 var activationResult = WaitForFlowActivation(flow);
 
@@ -342,8 +346,12 @@ namespace A320FlowTrainer
 
         static ActivationResult WaitForFlowActivation(Flow flow)
         {
-            // Säkerställ att vi lyssnar
+            // Säkerställ att vi lyssnar (om inte pausat)
+            _isPaused = false;
             StartListening();
+
+            // Dölj cursor medan vi väntar
+            Console.CursorVisible = false;
 
             // Spara cursor-position för feedback
             int feedbackLine = Console.CursorTop;
@@ -359,9 +367,29 @@ namespace A320FlowTrainer
                         return ActivationResult.Skip;
                     if (key.Key == ConsoleKey.Enter)
                         return ActivationResult.Activated;
+                    if (key.Key == ConsoleKey.Spacebar)
+                    {
+                        _isPaused = !_isPaused;
+                        if (_isPaused)
+                        {
+                            StopListening();
+                            Console.SetCursorPosition(0, feedbackLine);
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.Write("  ⏸  PAUSED   - press «space» to resume".PadRight(70));
+                            Console.ResetColor();
+                        }
+                        else
+                        {
+                            StartListening();
+                            Console.SetCursorPosition(0, feedbackLine);
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.Write("  🎧 LISTENING - press «space» to pause".PadRight(70));
+                            Console.ResetColor();
+                        }
+                    }
                 }
 
-                if (!_useTextFallback)
+                if (!_useTextFallback && !_isPaused)
                 {
                     var input = ListenForSpeech(2000);
                     if (input != null)
