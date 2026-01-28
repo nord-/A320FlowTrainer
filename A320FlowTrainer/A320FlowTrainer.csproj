@@ -14,4 +14,14 @@
     <PackageReference Include="Vosk" Version="0.3.38" />
   </ItemGroup>
 
+  <!-- Kopiera flows.json och audio-filer till output -->
+  <ItemGroup>
+    <Content Include="..\flows.json" Link="flows.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\audio\**\*" Link="audio\%(RecursiveDir)%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
