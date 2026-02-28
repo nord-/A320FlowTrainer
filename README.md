@@ -7,46 +7,52 @@ Ett kommandoradsbaserat träningsprogram för Airbus A320/321 cockpit flows. Pro
 - `A320FlowTrainer/` - C# konsolapplikation
 - `flows.json` - Strukturerad data med alla flows
 - `audio_files.json` - Lista på ljudfiler som behövs
-- `generate_audio_gtts.py` - Script för att generera ljud med Google TTS
 - `generate_audio_piper.py` - Script för att generera ljud med Piper TTS
 
 ## Setup
 
-### 1. Generera ljudfiler
+### 1. Installera .NET 10
 
-Välj ett av alternativen:
-
-**Alternativ A: Google TTS (enklast)**
-```bash
-pip install gtts
-python generate_audio_gtts.py
+```powershell
+winget install Microsoft.DotNet.SDK.10
 ```
-Detta skapar .mp3-filer i `audio/` mappen.
 
-**Alternativ B: Piper TTS (bättre kvalitet)**
+Eller ladda ner manuellt från [dotnet.microsoft.com](https://dotnet.microsoft.com/download/dotnet/10.0).
+
+### 2. Ljudfiler
+
+Färdiga ljudfiler (.wav) finns redan i `audio/` mappen i repot. Du behöver bara generera om dem om du ändrar flows.
+
+För att generera om ljudfiler behövs [Piper TTS](https://github.com/rhasspy/piper) (offline, hög kvalitet):
+
+1. Ladda ner Piper från [GitHub Releases](https://github.com/rhasspy/piper/releases)
+2. Ladda ner en röstmodell (`.onnx` + `.onnx.json`), t.ex. Joe:
+   [en_US/joe/medium](https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/joe/medium)
+3. Generera ljudfiler:
+
 ```bash
-# Ladda ner Piper och en röstmodell (t.ex. Joe)
-# https://github.com/rhasspy/piper/releases
-# https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/joe/medium
-
 python generate_audio_piper.py --model path/to/en_US-joe-medium.onnx
 ```
-Detta skapar .wav-filer i `audio/` mappen.
 
-### 2. Ladda ner Vosk-modell (för röststyrning)
-
+Flaggan `--piper` kan användas om `piper`-exen inte ligger i PATH:
 ```bash
+python generate_audio_piper.py --model path/to/en_US-joe-medium.onnx --piper path/to/piper.exe
+```
+
+### 3. Ladda ner Vosk-modell (för röststyrning)
+
+```powershell
 cd A320FlowTrainer
 mkdir model
 cd model
-curl -LO https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
-unzip vosk-model-small-en-us-0.15.zip
-mv vosk-model-small-en-us-0.15/* .
-rmdir vosk-model-small-en-us-0.15
-rm vosk-model-small-en-us-0.15.zip
+Invoke-WebRequest -Uri https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip -OutFile vosk-model-small-en-us-0.15.zip
+Expand-Archive vosk-model-small-en-us-0.15.zip -DestinationPath .
+Move-Item vosk-model-small-en-us-0.15\* .
+Remove-Item vosk-model-small-en-us-0.15 -Recurse
+Remove-Item vosk-model-small-en-us-0.15.zip
 ```
 
-### 3. Bygg och kör C#-appen
+### 4. Bygg och kör C#-appen
 
 ```bash
 cd A320FlowTrainer
@@ -59,7 +65,7 @@ Eller publicera som standalone:
 dotnet publish -c Release -r win-x64 --self-contained
 ```
 
-### 4. Kopiera filer
+### 5. Kopiera filer
 
 Kopiera följande till samma mapp som .exe-filen:
 - `flows.json`
@@ -126,13 +132,13 @@ Efter ändringar i flows, kör `parse_flows_v2.py` för att uppdatera `audio_fil
 - Windows (för System.Speech TTS)
 - .NET 10.0 eller senare
 - Mikrofon (för röstinmatning)
-- Vosk-modell (se steg 2 ovan)
+- Vosk-modell (se steg 3 ovan)
 
 ## Felsökning
 
 **"Vosk model not found"**
 - Kontrollera att `model/` mappen finns med Vosk-modellen
-- Se steg 2 i Setup ovan
+- Se steg 3 i Setup ovan
 
 **"Speech recognition not available"**
 - Kontrollera att du har en mikrofon ansluten
