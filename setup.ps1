@@ -116,10 +116,20 @@ try {
     Pop-Location
 }
 
+# Copy model to publish output (flows.json and audio/ are copied by csproj)
+$publishDir = Join-Path $projectRoot "A320FlowTrainer\bin\Release\net10.0-windows\win-x64\publish"
+$publishModelDir = Join-Path $publishDir "model"
+if (-not (Test-Path $publishModelDir)) {
+    Write-Host "  Copying Vosk model to publish directory..."
+    Copy-Item -Path $modelDir -Destination $publishModelDir -Recurse
+}
+
 Write-Host ""
 Write-Host "=== Setup complete! ===" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "To run the app:" -ForegroundColor White
-Write-Host "  cd A320FlowTrainer" -ForegroundColor White
-Write-Host "  dotnet run" -ForegroundColor White
+Write-Host "Published app is ready at:" -ForegroundColor White
+Write-Host "  $publishDir" -ForegroundColor White
+Write-Host ""
+Write-Host "Or run directly with:" -ForegroundColor White
+Write-Host "  cd A320FlowTrainer && dotnet run" -ForegroundColor White
 Write-Host ""

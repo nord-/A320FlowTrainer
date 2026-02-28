@@ -11,66 +11,40 @@ Ett kommandoradsbaserat träningsprogram för Airbus A320/321 cockpit flows. Pro
 
 ## Setup
 
-### 1. Installera .NET 10
+### Snabbstart (rekommenderat)
+
+Kör setup-skriptet som installerar allt automatiskt:
 
 ```powershell
-winget install Microsoft.DotNet.SDK.10
+.\setup.ps1
 ```
 
-Eller ladda ner manuellt från [dotnet.microsoft.com](https://dotnet.microsoft.com/download/dotnet/10.0).
+Skriptet gör följande:
+1. Installerar .NET 10 SDK (via winget)
+2. Laddar ner Vosk-modell för röststyrning
+3. Laddar ner Piper röstmodell för ljudgenerering
+4. Publicerar appen som standalone exe med alla beroenden
 
-### 2. Ljudfiler
+Den publicerade appen hamnar i `A320FlowTrainer\bin\Release\net10.0-windows\win-x64\publish\`.
 
-Färdiga ljudfiler (.wav) finns redan i `audio/` mappen i repot. Du behöver bara generera om dem om du ändrar flows.
+### Manuell setup
 
-För att generera om ljudfiler behövs [Piper TTS](https://github.com/rhasspy/piper) (offline, hög kvalitet):
+Om du föredrar att installera manuellt:
 
-1. Ladda ner Piper från [GitHub Releases](https://github.com/rhasspy/piper/releases)
-2. Ladda ner en röstmodell (`.onnx` + `.onnx.json`), t.ex. Joe:
-   [en_US/joe/medium](https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/joe/medium)
-3. Generera ljudfiler:
+1. **Installera .NET 10 SDK**: `winget install Microsoft.DotNet.SDK.10`
+2. **Ladda ner Vosk-modell** till `A320FlowTrainer/model/`:
+   [vosk-model-small-en-us-0.15](https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip)
+3. **Bygg och kör**: `cd A320FlowTrainer && dotnet run`
+
+För standalone-publicering, kopiera `model/`-mappen till publish-katalogen (bredvid .exe-filen). `flows.json` och `audio/` kopieras automatiskt vid build.
+
+### Generera om ljudfiler
+
+Färdiga ljudfiler (.wav) finns redan i `audio/`. Du behöver bara generera om dem om du ändrar flows.
 
 ```bash
-python generate_audio_piper.py --model path/to/en_US-joe-medium.onnx
+python generate_audio_piper.py --model tools/piper/en_US-joe-medium.onnx
 ```
-
-Flaggan `--piper` kan användas om `piper`-exen inte ligger i PATH:
-```bash
-python generate_audio_piper.py --model path/to/en_US-joe-medium.onnx --piper path/to/piper.exe
-```
-
-### 3. Ladda ner Vosk-modell (för röststyrning)
-
-```powershell
-cd A320FlowTrainer
-mkdir model
-cd model
-Invoke-WebRequest -Uri https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip -OutFile vosk-model-small-en-us-0.15.zip
-Expand-Archive vosk-model-small-en-us-0.15.zip -DestinationPath .
-Move-Item vosk-model-small-en-us-0.15\* .
-Remove-Item vosk-model-small-en-us-0.15 -Recurse
-Remove-Item vosk-model-small-en-us-0.15.zip
-```
-
-### 4. Bygg och kör C#-appen
-
-```bash
-cd A320FlowTrainer
-dotnet build
-dotnet run
-```
-
-Eller publicera som standalone:
-```bash
-dotnet publish -c Release -r win-x64 --self-contained
-```
-
-### 5. Kopiera filer
-
-Kopiera följande till samma mapp som .exe-filen:
-- `flows.json`
-- `audio/` mappen med alla ljudfiler
-- `model/` mappen med Vosk-modellen
 
 ## Användning
 
