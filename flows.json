@@ -524,7 +524,7 @@
   },
   {
     "name": "10000 FT CLIMB FLOWS",
-    "trigger_phrase": "10000 ft climb flows",
+    "trigger_phrase": "ten thousand feet climb flows",
     "items": [
       {
         "item": "EXT LIGHTS",
@@ -564,7 +564,7 @@
   },
   {
     "name": "10000 FT DESCENT FLOWS",
-    "trigger_phrase": "10000 ft descent flows",
+    "trigger_phrase": "ten thousand feet descent flows",
     "items": [
       {
         "item": "SLIDING TABLES",

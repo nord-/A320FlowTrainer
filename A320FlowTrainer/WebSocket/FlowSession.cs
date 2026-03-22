@@ -108,6 +108,7 @@ public class FlowSession
         var flows = _flowService.Flows;
         if (flowIndex < 0 || flowIndex >= flows.Count) return;
 
+        _idleListening = false;
         _currentFlowIndex = flowIndex;
         await ActivateFlow();
     }
@@ -272,7 +273,10 @@ public class FlowSession
 
         if (key == "space")
         {
-            await TogglePause();
+            if (_state == SessionState.Idle)
+                await ToggleIdleListening();
+            else
+                await TogglePause();
             return;
         }
 
@@ -303,6 +307,26 @@ public class FlowSession
                 _speechService.ResetState();
                 await ReturnToFlowList();
                 break;
+        }
+    }
+
+    private bool _idleListening;
+
+    private async Task ToggleIdleListening()
+    {
+        if (!_speechService.IsAvailable) return;
+
+        _idleListening = !_idleListening;
+        if (_idleListening)
+        {
+            _speechService.ResetState();
+            _speechService.StartListening();
+            await _send(new { type = "listeningState", listening = true });
+        }
+        else
+        {
+            _speechService.StopListening();
+            await _send(new { type = "listeningState", listening = false });
         }
     }
 
@@ -338,7 +362,35 @@ public class FlowSession
 
         try
         {
-            if (_state == SessionState.WaitingForConfirm)
+            if (_state == SessionState.Idle && _idleListening)
+            {
+                // Matcha mot alla flows - valj basta match
+                var flows = _flowService.Flows;
+                int bestIndex = -1;
+                int bestScore = 0;
+                string bestDetails = "";
+
+                for (int i = 0; i < flows.Count; i++)
+                {
+                    var (isMatch, score, details) = _confirmationService.IsFlowMatchWithScore(text, flows[i]);
+                    if (isMatch && score > bestScore)
+                    {
+                        bestIndex = i;
+                        bestScore = score;
+                        bestDetails = details;
+                    }
+                }
+
+                if (bestIndex >= 0)
+                {
+                    await _send(new { type = "speechHeard", text, score = bestScore, matched = true, details = bestDetails });
+                    _idleListening = false;
+                    await StartFlow(bestIndex);
+                    return;
+                }
+                await _send(new { type = "speechHeard", text, score = 0, matched = false });
+            }
+            else if (_state == SessionState.WaitingForConfirm)
             {
                 var flow = _flowService.Flows[_currentFlowIndex];
                 var itemIndex = _itemsToRun[_currentRunIndex];

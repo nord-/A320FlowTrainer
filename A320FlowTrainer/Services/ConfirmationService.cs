@@ -110,13 +110,51 @@ public class ConfirmationService
         return false;
     }
 
+    private static readonly Dictionary<string, string> NumberWords = new()
+    {
+        { "thousand", "000" },
+        { "hundred", "00" },
+        { "ten", "10" },
+        { "twenty", "20" },
+        { "thirty", "30" },
+        { "forty", "40" },
+        { "fifty", "50" },
+    };
+
+    private static string NormalizeNumbers(string text)
+    {
+        var result = text;
+        // "ten thousand" -> "10000"
+        result = Regex.Replace(result, @"\bten thousand\b", "10000");
+        // "feet" -> "ft"
+        result = Regex.Replace(result, @"\bfeet\b", "ft");
+        return result;
+    }
+
     public (bool isMatch, int score, string details) IsFlowMatchWithScore(string input, Flow flow)
     {
-        var flowNameLower = flow.Name.ToLower();
-        var inputLower = input.ToLower();
+        var inputLower = NormalizeNumbers(input.ToLower());
 
+        // Matcha mot bade Name och TriggerPhrase, behall basta
+        var nameResult = MatchAgainstFlowName(inputLower, flow.Name.ToLower());
+        var triggerResult = !string.IsNullOrEmpty(flow.TriggerPhrase)
+            ? MatchAgainstFlowName(inputLower, flow.TriggerPhrase.ToLower())
+            : (isMatch: false, score: 0, details: "");
+
+        return triggerResult.score > nameResult.score ? triggerResult : nameResult;
+    }
+
+    private (bool isMatch, int score, string details) MatchAgainstFlowName(string inputLower, string flowNameLower)
+    {
+        if (flowNameLower == inputLower)
+            return (true, 200, "exact");
         if (flowNameLower.Contains(inputLower) || inputLower.Contains(flowNameLower))
-            return (true, 100, "exact");
+        {
+            int longer = Math.Max(flowNameLower.Length, inputLower.Length);
+            int shorter = Math.Min(flowNameLower.Length, inputLower.Length);
+            int similarity = 100 + (shorter * 100 / longer);
+            return (true, similarity, "exact");
+        }
 
         var flowNoSpaces = flowNameLower.Replace(" ", "").Replace("flows", "");
         var inputNoSpaces = inputLower.Replace(" ", "");
