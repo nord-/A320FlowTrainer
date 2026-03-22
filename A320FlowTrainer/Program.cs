@@ -87,15 +87,4 @@ app.MapGet("/api/flows", (FlowService fs) => fs.Flows);
 Console.WriteLine("\n  A320 Flow Trainer - Web UI");
 Console.WriteLine("  http://localhost:5320\n");
 
-// Oppna browser
-try
-{
-    Process.Start(new ProcessStartInfo
-    {
-        FileName = "http://localhost:5320",
-        UseShellExecute = true
-    });
-}
-catch { }
-
 app.Run();
