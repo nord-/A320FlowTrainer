@@ -70,20 +70,17 @@ const FlowRenderer = (() => {
                 details.appendChild(note);
             }
 
-            const itemTable = document.createElement('div');
-            itemTable.className = 'flow-card-items';
+            const table = document.createElement('table');
+            table.className = 'flow-card-table';
             flow.items.forEach((item, j) => {
-                const row = document.createElement('div');
-                row.className = 'flow-card-item';
-                row.innerHTML = `
-                    <span class="fci-number">${j + 1}.</span>
-                    <span class="fci-name">${escapeHtml(item.item)}</span>
-                    <span class="fci-sep">&rarr;</span>
-                    <span class="fci-response">${escapeHtml(item.response)}</span>
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="fci-name">${escapeHtml(item.item)}</td>
+                    <td class="fci-response">${escapeHtml(item.response)}</td>
                 `;
-                itemTable.appendChild(row);
+                table.appendChild(tr);
             });
-            details.appendChild(itemTable);
+            details.appendChild(table);
 
             card.appendChild(header);
             card.appendChild(details);
@@ -124,33 +121,36 @@ const FlowRenderer = (() => {
     }
 
     function renderItems(activeIndex) {
-        const list = document.getElementById('item-list');
-        list.innerHTML = '';
+        const container = document.getElementById('item-list');
+        container.innerHTML = '';
+
+        const table = document.createElement('table');
+        table.className = 'item-table';
 
         currentItems.forEach((item, i) => {
             const status = currentItemStatus[i];
             const isActive = i === activeIndex;
 
-            const row = document.createElement('div');
-            row.className = 'item-row';
-            row.id = `item-${i}`;
-            if (isActive) row.classList.add('active');
-            if (status === 'done') row.classList.add('done');
+            const tr = document.createElement('tr');
+            tr.className = 'item-row';
+            tr.id = `item-${i}`;
+            if (isActive) tr.classList.add('active');
+            if (status === 'done') tr.classList.add('done');
 
             const statusIcon = status === 'done' ? '<span class="mdi mdi-check"></span>' :
                                isActive ? '<span class="mdi mdi-play"></span>' :
                                status === 'skip' ? '<span class="mdi mdi-minus"></span>' : '';
 
-            row.innerHTML = `
-                <span class="item-status ${status}">${statusIcon}</span>
-                <span class="item-number">${i + 1}.</span>
-                <span class="item-name">${escapeHtml(item.item)}</span>
-                <span class="item-separator">&rarr;</span>
-                <span class="item-response">${escapeHtml(item.response)}</span>
+            tr.innerHTML = `
+                <td class="item-status ${status}">${statusIcon}</td>
+                <td class="item-name">${escapeHtml(item.item)}</td>
+                <td class="item-response">${escapeHtml(item.response)}</td>
             `;
 
-            list.appendChild(row);
+            table.appendChild(tr);
         });
+
+        container.appendChild(table);
 
         if (activeIndex >= 0) {
             const activeRow = document.getElementById(`item-${activeIndex}`);

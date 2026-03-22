@@ -274,42 +274,26 @@ main {
     margin-bottom: 8px;
 }
 
-.flow-card-items {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.flow-card-item {
-    display: flex;
-    align-items: center;
+.flow-card-table {
+    width: 100%;
+    border-collapse: collapse;
     font-family: var(--font-mono);
     font-size: 12px;
-    padding: 2px 0;
 }
 
-.fci-number {
-    color: var(--text-dim);
-    width: 24px;
-    text-align: right;
-    margin-right: 8px;
-    flex-shrink: 0;
+.flow-card-table td {
+    padding: 2px 8px 2px 0;
+    vertical-align: top;
 }
 
-.fci-name {
+.flow-card-table .fci-name {
     color: var(--cyan);
-    margin-right: 6px;
-    flex-shrink: 0;
+    white-space: nowrap;
 }
 
-.fci-sep {
-    color: var(--text-dim);
-    margin-right: 6px;
-    flex-shrink: 0;
-}
-
-.fci-response {
+.flow-card-table .fci-response {
     color: var(--text-secondary);
+    width: 100%;
 }
 
 .btn-back {
@@ -358,12 +342,14 @@ main {
     padding: 8px 0;
 }
 
-.item-row {
-    display: flex;
-    align-items: center;
-    padding: 6px 24px;
+.item-table {
+    width: 100%;
+    border-collapse: collapse;
     font-family: var(--font-mono);
     font-size: 13px;
+}
+
+.item-row {
     transition: background 0.2s;
 }
 
@@ -375,10 +361,14 @@ main {
     opacity: 0.6;
 }
 
+.item-row td {
+    padding: 5px 8px;
+    vertical-align: middle;
+}
+
 .item-status {
     width: 28px;
     text-align: center;
-    flex-shrink: 0;
     font-size: 13px;
 }
 
@@ -387,37 +377,17 @@ main {
 .item-status.done { color: var(--green); }
 .item-status.skip { color: var(--text-dim); }
 
-.item-number {
-    width: 28px;
-    text-align: right;
-    margin-right: 8px;
-    flex-shrink: 0;
-}
-
-.item-row.active .item-number { color: var(--text-primary); }
-.item-row:not(.active) .item-number { color: var(--text-dim); }
-
 .item-name {
-    color: var(--cyan);
-    margin-right: 8px;
-    flex-shrink: 0;
+    color: #4a9ab5;
+    white-space: nowrap;
+    padding-left: 16px !important;
 }
 
 .item-row.active .item-name { color: var(--cyan); }
-.item-row:not(.active) .item-name { color: #4a9ab5; }
-.item-row.done .item-name { color: #4a9ab5; }
-
-.item-separator {
-    color: var(--text-dim);
-    margin-right: 8px;
-    flex-shrink: 0;
-}
 
 .item-response {
     color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    width: 100%;
 }
 
 .item-row.active .item-response { color: var(--text-primary); }
