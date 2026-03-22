@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A320 Flow Trainer</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <header id="header">
+            <div class="header-title">AIRBUS A320/321 FLOW TRAINER</div>
+            <div class="header-status">
+                <span id="mic-indicator" class="indicator off">MIC</span>
+                <span id="pause-indicator" class="indicator off">PAUSED</span>
+            </div>
+        </header>
+
+        <main id="flow-container">
+            <div id="view-welcome" class="view active">
+                <div class="welcome-box">
+                    <h1>A320 FLOW TRAINER</h1>
+                    <p>Say flow name to start, say 'CHECKED' to confirm.</p>
+                    <p>Press SPACE to pause/resume, ESC to quit.</p>
+                    <div class="connecting">Connecting...</div>
+                </div>
+            </div>
+
+            <div id="view-activation" class="view">
+                <div class="activation-box">
+                    <div class="flow-counter" id="flow-counter"></div>
+                    <div class="next-label">NEXT FLOW</div>
+                    <h2 id="activation-flow-name"></h2>
+                    <div id="activation-flow-note" class="flow-note"></div>
+                    <div class="activation-hint">
+                        Say the flow name or press ENTER to begin
+                        <br><small>TAB/N to skip</small>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-flow" class="view">
+                <div class="flow-header">
+                    <span id="flow-name" class="flow-title"></span>
+                    <span id="flow-progress" class="flow-progress"></span>
+                </div>
+                <div id="item-list" class="item-list"></div>
+            </div>
+
+            <div id="view-complete" class="view">
+                <div class="complete-box">
+                    <h1>ALL FLOWS COMPLETE</h1>
+                    <p>Great job!</p>
+                </div>
+            </div>
+        </main>
+
+        <footer id="status-bar">
+            <span id="speech-feedback"></span>
+            <span id="keyboard-hints">ENTER=confirm SPACE=pause ESC=quit R=repeat</span>
+        </footer>
+    </div>
+
+    <div id="pause-overlay" class="pause-overlay hidden">
+        <div class="pause-text">PAUSED</div>
+        <div class="pause-hint">Press SPACE to resume</div>
+    </div>
+
+    <script src="js/audio-player.js"></script>
+    <script src="js/keyboard-handler.js"></script>
+    <script src="js/flow-renderer.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
