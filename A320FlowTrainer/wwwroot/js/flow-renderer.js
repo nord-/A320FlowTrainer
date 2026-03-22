@@ -192,7 +192,6 @@ const FlowRenderer = (() => {
     }
 
     function setPaused(paused) {
-        document.getElementById('pause-overlay').classList.toggle('hidden', !paused);
         const el = document.getElementById('pause-indicator');
         el.classList.toggle('on', paused);
         el.classList.toggle('off', !paused);

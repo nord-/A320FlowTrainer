@@ -13,7 +13,7 @@
         <header id="header">
             <div class="header-title">AIRBUS A320/321 FLOW TRAINER</div>
             <div class="header-status">
-                <span id="mic-indicator" class="indicator off">MIC</span>
+                <span id="mic-indicator" class="indicator off"><span class="rec-dot"></span> MIC</span>
                 <span id="pause-indicator" class="indicator off">PAUSED</span>
                 <button id="btn-settings" class="btn-icon" title="Settings"><span class="mdi mdi-cog"></span></button>
             </div>
@@ -56,11 +56,6 @@
             <span id="speech-feedback"></span>
             <span id="keyboard-hints">ENTER=confirm SPACE=pause ESC=quit R=repeat</span>
         </footer>
-    </div>
-
-    <div id="pause-overlay" class="pause-overlay hidden">
-        <div class="pause-text">PAUSED</div>
-        <div class="pause-hint">Press SPACE to resume</div>
     </div>
 
     <div id="settings-modal" class="modal hidden">

@@ -116,6 +116,7 @@ public class FlowSession
     {
         _speechService.StopListening();
         _state = SessionState.Idle;
+        await _send(new { type = "listeningState", listening = false });
         await _send(new { type = "showFlowList" });
     }
 

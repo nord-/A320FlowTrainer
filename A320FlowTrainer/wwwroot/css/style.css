@@ -89,6 +89,25 @@ header {
     border-color: var(--green);
 }
 
+.rec-dot {
+    display: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    margin-right: 4px;
+}
+
+#mic-indicator.on .rec-dot {
+    display: inline-block;
+    animation: rec-blink 1s infinite;
+}
+
+@keyframes rec-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+
 #pause-indicator.on {
     background: rgba(255, 165, 0, 0.15);
     color: var(--amber);
@@ -432,35 +451,6 @@ footer {
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.5px;
-}
-
-/* Pause overlay */
-.pause-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-}
-
-.pause-overlay.hidden {
-    display: none;
-}
-
-.pause-text {
-    color: var(--amber);
-    font-size: 48px;
-    font-weight: bold;
-    letter-spacing: 8px;
-}
-
-.pause-hint {
-    color: var(--text-secondary);
-    font-size: 14px;
-    margin-top: 16px;
 }
 
 /* Settings button */
