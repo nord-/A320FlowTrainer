@@ -308,12 +308,12 @@ def expand_abbreviations(text):
         r'\bIGN\b': 'Ignition',
         r'\bRUD\b': 'Rudder',
         
-        # Navigation
-        r'\bNAV\b': 'Navigation',
+        # Navigation (NAV/RAD fore NAV sa att den inte splittras)
+        r'\bNAV/RAD\b': 'Navigation Radio',
+        r'\bNAV\b(?!/)': 'Navigation',
         r'\bHDG\b': 'Heading',
         r'\bFPLN\b': 'Flight Plan',
         r'\bPERF\b': 'Performance',
-        r'\bNAV/RAD\b': 'Nav Radio',
         
         # Enheter
         r'\bFT\b': 'Feet',
@@ -345,6 +345,9 @@ def expand_abbreviations(text):
         r'\bX-BLEED\b': 'Cross Bleed',
         r'\bY ELEC\b': 'Yellow Electric',
         
+        # Sammansatta ord
+        r'\bPREDESCENT\b': 'Pre, Descent',
+
         # Specifika fraser
         r'\bTA/RA\b': 'T A, R A',
         r'\bT/O\b': 'Takeoff',
@@ -360,6 +363,17 @@ def expand_abbreviations(text):
 
     # Ersätt " - " med ". " för bättre TTS-pauser
     result = result.replace(' - ', '. ')
+
+    # Lowercase kvarvarande VERSALA ord som Piper annars stavar ut
+    # (hoppa over ord med siffror/mellanslag som redan expanderats)
+    def lower_if_not_acronym(match):
+        word = match.group(0)
+        # Behall korta ord (1-2 bokstaver) som versaler - troligen akronymer
+        if len(word) <= 2:
+            return word
+        return word.capitalize()
+
+    result = re.sub(r'\b[A-Z]{3,}\b', lower_if_not_acronym, result)
 
     return result
 
