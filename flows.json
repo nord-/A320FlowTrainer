@@ -4,30 +4,6 @@
     "trigger_phrase": "cockpit preparation flows",
     "items": [
       {
-        "item": "PFD LT",
-        "response": "BRT"
-      },
-      {
-        "item": "ND LT",
-        "response": "BRT"
-      },
-      {
-        "item": "ECAM UPPER DISPLAY",
-        "response": "BRT"
-      },
-      {
-        "item": "ECAM LOWER DISPLAY",
-        "response": "BRT"
-      },
-      {
-        "item": "FLOOD LT",
-        "response": "AS RQRD"
-      },
-      {
-        "item": "INTEG LT",
-        "response": "AS RQRD"
-      },
-      {
         "item": "BATTERY",
         "response": "ON - CHECK VOLTAGE"
       },
@@ -284,6 +260,120 @@
     ]
   },
   {
+    "name": "PUSHBACK & ENGINE START FLOWS (1 ENG TAXI)",
+    "trigger_phrase": "pushback & start flows one engine taxi",
+    "items": [
+      {
+        "item": "PUSH & START CLEARANCE",
+        "response": "OBTAIN"
+      },
+      {
+        "item": "GROUND COMMUNICATION",
+        "response": "INITIATE/FOLLOW COMMANDS"
+      },
+      {
+        "item": "CHRONO",
+        "response": "START"
+      },
+      {
+        "item": "RIGHT SIDE",
+        "response": "VERIFY CLEAR"
+      },
+      {
+        "item": "ENG MODE SELECTOR",
+        "response": "IGN/START"
+      },
+      {
+        "item": "ENG MASTER 1",
+        "response": "ON"
+      },
+      {
+        "item": "X-BLEED",
+        "response": "OPEN"
+      },
+      {
+        "item": "ECAM",
+        "response": "MONITOR"
+      },
+      {
+        "item": "ENGINE",
+        "response": "CONFIRM STABILIZED"
+      },
+      {
+        "item": "Y ELEC PUMP",
+        "response": "ON"
+      }
+    ]
+  },
+  {
+    "name": "AFTER START 1 ENG TAXI FLOWS",
+    "trigger_phrase": "after start flows one engine taxi",
+    "items": [
+      {
+        "item": "ENG & WING ANTI ICE",
+        "response": "AS RQRD"
+      },
+      {
+        "item": "APU BLEED",
+        "response": "OFF"
+      },
+      {
+        "item": "PITCH TRIM",
+        "response": "SET"
+      },
+      {
+        "item": "ENG MODE SELECTOR",
+        "response": "NORM"
+      },
+      {
+        "item": "ECAM DOOR PAGE",
+        "response": "CHECKED"
+      },
+      {
+        "item": "ECAM STATUS",
+        "response": "CHECKED"
+      },
+      {
+        "item": "HAND SIGNALS",
+        "response": "RECEIVED"
+      }
+    ]
+  },
+  {
+    "name": "ENGINE 2 START FLOWS",
+    "trigger_phrase": "engine two start flows",
+    "items": [
+      {
+        "item": "PARKING BRAKE",
+        "response": "SET"
+      },
+      {
+        "item": "ENG MODE SELECTOR",
+        "response": "IGN/START"
+      },
+      {
+        "item": "ENG MASTER 2",
+        "response": "ON"
+      },
+      {
+        "item": "APU BLEED",
+        "response": "ON"
+      },
+      {
+        "item": "Y ELEC PUMP",
+        "response": "ON"
+      },
+      {
+        "item": "ECAM",
+        "response": "MONITOR"
+      },
+      {
+        "item": "ENGINE",
+        "response": "CONFIRM STABILIZED"
+      }
+    ]
+  },
+  {
     "name": "AFTER START FLOWS",
     "trigger_phrase": "after start flows",
     "items": [
@@ -298,6 +388,10 @@
       {
         "item": "APU MASTER",
         "response": "OFF"
+      },
+      {
+        "item": "X-BLEED",
+        "response": "AUTO"
       },
       {
         "item": "PITCH TRIM",
@@ -394,6 +488,10 @@
       {
         "item": "EXT LIGHTS",
         "response": "ON"
+      },
+      {
+        "item": "TIMER",
+        "response": "START"
       }
     ]
   },
@@ -459,14 +557,6 @@
         "response": "CHECK"
       },
       {
-        "item": "AUTO BRAKE",
-        "response": "SET"
-      },
-      {
-        "item": "SEAT BELT SIGN",
-        "response": "ON"
-      },
-      {
         "item": "ANTI ICE",
         "response": "AS RQRD"
       }
@@ -519,6 +609,10 @@
         "response": "ARMED"
       },
       {
+        "item": "AUTO BRAKE",
+        "response": "SET"
+      },
+      {
         "item": "LANDING MEMO",
         "response": "NO BLUE"
       }
@@ -529,6 +623,10 @@
     "name": "AFTER LANDING FLOWS",
     "trigger_phrase": "after landing flows",
     "items": [
+      {
+        "item": "TIMER",
+        "response": "STOP"
+      },
       {
         "item": "SPOILERS",
         "response": "RETRACT"
@@ -560,6 +658,22 @@
       {
         "item": "ENGINE & WING ANTI ICE",
         "response": "OFF"
+      },
+      {
+        "item": "ENG MIN COOLING",
+        "response": "3 MINUTES"
+      },
+      {
+        "item": "APU AVAIL",
+        "response": "INDICATING"
+      },
+      {
+        "item": "ENG MASTER 2",
+        "response": "OFF"
+      },
+      {
+        "item": "Y ELEC PUMP",
+        "response": "ON"
       }
     ]
   },
@@ -570,6 +684,14 @@
       {
         "item": "PARK BRAKE",
         "response": "SET"
+      },
+      {
+        "item": "APU BLEED",
+        "response": "ON"
+      },
+      {
+        "item": "Y ELEC PUMP",
+        "response": "OFF"
       },
       {
         "item": "ENG MASTER 1+2",
@@ -602,22 +724,6 @@
     "trigger_phrase": "securing flows",
     "items": [
       {
-        "item": "PFD LT",
-        "response": "OFF"
-      },
-      {
-        "item": "ND LT",
-        "response": "OFF"
-      },
-      {
-        "item": "ECAM UPPER LT",
-        "response": "OFF"
-      },
-      {
-        "item": "ECAM LOWER LT",
-        "response": "OFF"
-      },
-      {
         "item": "ADIRS",
         "response": "OFF"
       },
@@ -633,7 +739,11 @@
         "item": "APU",
         "response": "SHUTDOWN"
       },
-      {
+       {
+        "item": "NAV & LOGO LIGHTS",
+        "response": "OFF"
+      },
+     {
         "item": "CABIN SIGNS & EMERGENCY LIGHTS",
         "response": "OFF"
       },

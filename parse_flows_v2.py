@@ -100,12 +100,52 @@ flows_data = [
         ]
     },
     {
+        "name": "PUSHBACK & ENGINE START FLOWS (1 ENG TAXI)",
+        "items": [
+            ("PUSH & START CLEARANCE", "OBTAIN"),
+            ("GROUND COMMUNICATION", "INITIATE/FOLLOW COMMANDS"),
+            ("CHRONO", "START"),
+            ("RIGHT SIDE", "VERIFY CLEAR"),
+            ("ENG MODE SELECTOR", "IGN/START"),
+            ("ENG MASTER 1", "ON"),
+            ("X-BLEED", "OPEN"),
+            ("ECAM", "MONITOR"),
+            ("ENGINE", "CONFIRM STABILIZED"),
+            ("Y ELEC PUMP", "ON"),
+        ]
+    },
+    {
+        "name": "AFTER START 1 ENG TAXI FLOWS",
+        "items": [
+            ("ENG & WING ANTI ICE", "AS RQRD"),
+            ("APU BLEED", "OFF"),
+            ("PITCH TRIM", "SET"),
+            ("ENG MODE SELECTOR", "NORM"),
+            ("ECAM DOOR PAGE", "CHECKED"),
+            ("ECAM STATUS", "CHECKED"),
+            ("HAND SIGNALS", "RECEIVED"),
+        ]
+    },
+    {
+        "name": "ENGINE 2 START FLOWS",
+        "items": [
+            ("PARKING BRAKE", "SET"),
+            ("ENG MODE SELECTOR", "IGN/START"),
+            ("ENG MASTER 2", "ON"),
+            ("APU BLEED", "ON"),
+            ("Y ELEC PUMP", "ON"),
+            ("ECAM", "MONITOR"),
+            ("ENGINE", "CONFIRM STABILIZED"),
+        ]
+    },
+    {
         "name": "AFTER START FLOWS",
         "items": [
             # OVERHEAD PANEL
             ("ENG & WING ANTI ICE", "AS RQRD"),
             ("APU BLEED", "OFF"),
             ("APU MASTER", "OFF"),
+            ("X-BLEED", "AUTO"),
             # PEDESTAL
             ("PITCH TRIM", "SET"),
             ("ENG MODE SELECTOR", "AS RQRD"),
@@ -133,18 +173,14 @@ flows_data = [
     {
         "name": "BEFORE TAKE OFF FLOWS",
         "items": [
-            # PEDESTAL
             ("TCAS", "TA/RA - TILT ABOVE"),
             ("ENG MODE SELECTOR", "AS RQRD"),
-            # ECAM
             ("BRAKE TEMP", "CHECK GREATER THAN 150"),
-            # MAIN PANEL
             ("BRAKE FANS", "OFF"),
             ("SLIDING TABLE", "STOWED"),
-            # ATC
             ("TAKE OFF/LINE UP CLEARANCE", "OBTAIN"),
-            # OVERHEAD PANEL
             ("EXT LIGHTS", "ON"),
+            ("TIMER", "START"),
         ]
     },
     {
@@ -172,8 +208,6 @@ flows_data = [
             ("ATIS", "OBTAIN"),
             ("MCDU", "FPLN, PERF, NAV/RAD SET"),
             ("NAV ACCURACY", "CHECK"),
-            ("AUTO BRAKE", "SET"),
-            ("SEAT BELT SIGN", "ON"),
             ("ANTI ICE", "AS RQRD"),
         ]
     },
@@ -195,12 +229,14 @@ flows_data = [
             ("TAXI LIGHT", "SET T/O"),
             ("MISSED APPROACH ALTITUDE", "SET"),
             ("SPOILERS", "ARMED"),
+            ("AUTO BRAKE", "SET"),
             ("LANDING MEMO", "NO BLUE"),
         ]
     },
     {
         "name": "AFTER LANDING FLOWS",
         "items": [
+            ("TIMER", "STOP"),
             ("SPOILERS", "RETRACT"),
             ("ENG MODE SELECTOR", "NORM"),
             ("FLAPS", "RETRACT"),
@@ -209,12 +245,18 @@ flows_data = [
             ("EXT LIGHTS", "OFF"),
             ("APU", "START"),
             ("ENGINE & WING ANTI ICE", "OFF"),
+            ("ENG MIN COOLING", "3 MINUTES"),
+            ("APU AVAIL", "INDICATING"),
+            ("ENG MASTER 2", "OFF"),
+            ("Y ELEC PUMP", "ON"),
         ]
     },
     {
         "name": "PARKING FLOWS",
         "items": [
             ("PARK BRAKE", "SET"),
+            ("APU BLEED", "ON"),
+            ("Y ELEC PUMP", "OFF"),
             ("ENG MASTER 1+2", "OFF"),
             ("SEAT BELT SIGN", "OFF"),
             ("BEACON", "OFF"),
@@ -226,14 +268,11 @@ flows_data = [
     {
         "name": "SECURING FLOWS",
         "items": [
-            ("PFD LT", "OFF"),
-            ("ND LT", "OFF"),
-            ("ECAM UPPER LT", "OFF"),
-            ("ECAM LOWER LT", "OFF"),
             ("ADIRS", "OFF"),
             ("EXT POWER", "OFF"),
             ("GEN", "ON"),
             ("APU", "SHUTDOWN"),
+            ("NAV & LOGO LIGHTS", "OFF"),
             ("CABIN SIGNS & EMERGENCY LIGHTS", "OFF"),
             ("BAT 1+2", "OFF"),
         ]
@@ -261,6 +300,8 @@ def expand_abbreviations(text):
         
         # Motor/System
         r'\bENG\b': 'Engine',
+        r'\bMIN\b': 'Minimum',
+        r'\bAVAIL\b': 'Available',
         r'\bGEN\b': 'Generator',
         r'\bHYDR\b': 'Hydraulic',
         r'\bELEC\b': 'Electric',
@@ -301,6 +342,8 @@ def expand_abbreviations(text):
         r'\bNWS\b': 'Nose Wheel Steering',
         r'\bBAT\b': 'Battery',
         r'\bFD\b': 'Flight Director',
+        r'\bX-BLEED\b': 'Cross Bleed',
+        r'\bY ELEC\b': 'Yellow Electric',
         
         # Specifika fraser
         r'\bTA/RA\b': 'T A, R A',
