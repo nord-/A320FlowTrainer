@@ -90,13 +90,18 @@
 
     function populateInputDevices(currentId) {
         inputSelect.innerHTML = '';
+        const savedId = localStorage.getItem('inputDeviceId');
         inputDevices.forEach(d => {
             const opt = document.createElement('option');
             opt.value = d.id;
             opt.textContent = d.name;
-            if (d.id === currentId) opt.selected = true;
+            if (savedId !== null ? d.id === parseInt(savedId) : d.id === currentId) opt.selected = true;
             inputSelect.appendChild(opt);
         });
+        // Restore saved device
+        if (savedId !== null && parseInt(savedId) !== currentId) {
+            send({ type: 'setInputDevice', deviceId: parseInt(savedId) });
+        }
     }
 
     async function populateOutputDevices() {
@@ -109,30 +114,29 @@
         const browserDevices = await AudioPlayer.getOutputDevices();
         outputSelect.innerHTML = '';
 
-        if (browserDevices.length > 0) {
-            // Browser har fulla device labels
-            browserDevices.forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d.id;
-                opt.textContent = d.name;
-                outputSelect.appendChild(opt);
-            });
-        } else {
-            // Fallback: visa server-side enheter (enbart for display)
-            serverOutputDevices.forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d.id;
-                opt.textContent = d.name;
-                outputSelect.appendChild(opt);
-            });
+        const savedOutput = localStorage.getItem('outputDeviceId');
+        const devices = browserDevices.length > 0 ? browserDevices : serverOutputDevices;
+        devices.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = d.name;
+            if (savedOutput && d.id === savedOutput) opt.selected = true;
+            outputSelect.appendChild(opt);
+        });
+        // Restore saved output device
+        if (savedOutput && browserDevices.length > 0) {
+            AudioPlayer.setOutputDevice(savedOutput);
         }
     }
 
     inputSelect.addEventListener('change', () => {
-        send({ type: 'setInputDevice', deviceId: parseInt(inputSelect.value) });
+        const id = parseInt(inputSelect.value);
+        localStorage.setItem('inputDeviceId', id);
+        send({ type: 'setInputDevice', deviceId: id });
     });
 
     outputSelect.addEventListener('change', () => {
+        localStorage.setItem('outputDeviceId', outputSelect.value);
         AudioPlayer.setOutputDevice(outputSelect.value);
     });
 

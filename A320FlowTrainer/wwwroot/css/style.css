@@ -213,10 +213,25 @@ main {
     min-width: 20px;
 }
 
+.flow-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
 .flow-card-name {
     color: var(--text-primary);
     font-size: 14px;
     font-weight: bold;
+}
+
+.flow-card-trigger {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-style: italic;
+    opacity: 0.7;
 }
 
 .flow-card-count {

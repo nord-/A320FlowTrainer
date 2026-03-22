@@ -92,6 +92,7 @@ public class FlowSession
             {
                 name = f.Name,
                 note = f.Note,
+                triggerPhrase = f.TriggerPhrase,
                 items = f.Items.Select(i => new { item = i.Item, response = i.Response })
             }),
             voskAvailable = _speechService.IsAvailable,

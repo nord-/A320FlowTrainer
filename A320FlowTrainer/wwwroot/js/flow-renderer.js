@@ -48,10 +48,14 @@ const FlowRenderer = (() => {
 
             const header = document.createElement('div');
             header.className = 'flow-card-header';
+            const trigger = flow.triggerPhrase || flow.name.toLowerCase();
             header.innerHTML = `
                 <div class="flow-card-info">
                     <span class="flow-card-number">${i + 1}</span>
-                    <span class="flow-card-name">${escapeHtml(flow.name)}</span>
+                    <div class="flow-card-text">
+                        <span class="flow-card-name">${escapeHtml(flow.name)}</span>
+                        <span class="flow-card-trigger">Say: "${escapeHtml(trigger)}"</span>
+                    </div>
                     <span class="flow-card-count">${flow.items.length} items</span>
                 </div>
                 <div class="flow-card-actions">
