@@ -6,11 +6,8 @@
         ws = new WebSocket(`${protocol}//${location.host}/ws`);
 
         ws.onopen = () => {
-            document.querySelector('.connecting').textContent = 'Connected!';
-            setTimeout(() => {
-                const params = new URLSearchParams(location.search);
-                send({ type: 'ready', testMode: params.has('test') });
-            }, 300);
+            const params = new URLSearchParams(location.search);
+            send({ type: 'ready', testMode: params.has('test') });
         };
 
         ws.onmessage = (e) => {
@@ -23,8 +20,8 @@
         };
 
         ws.onclose = () => {
-            document.querySelector('.connecting').textContent = 'Disconnected. Refreshing...';
-            setTimeout(() => location.reload(), 2000);
+            FlowRenderer.showConnecting();
+            setTimeout(connect, 2000);
         };
     }
 
@@ -37,11 +34,11 @@
     function handleMessage(msg) {
         switch (msg.type) {
             case 'init':
-                FlowRenderer.showWelcome();
+                FlowRenderer.showFlowList(msg.flows, msg.startupLog);
                 break;
 
-            case 'showFlowActivation':
-                FlowRenderer.showFlowActivation(msg);
+            case 'showFlowList':
+                FlowRenderer.showFlowList();
                 break;
 
             case 'showFlow':
@@ -71,6 +68,7 @@
                 break;
 
             case 'flowComplete':
+                FlowRenderer.showComplete();
                 break;
 
             case 'allComplete':
@@ -80,7 +78,14 @@
     }
 
     // Init
+    FlowRenderer.init(send);
     KeyboardHandler.init(send);
-    FlowRenderer.showWelcome();
+    FlowRenderer.showConnecting();
+
+    // "Back to flow list" button
+    document.getElementById('btn-back-to-list').addEventListener('click', () => {
+        FlowRenderer.showFlowList();
+    });
+
     connect();
 })();

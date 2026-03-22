@@ -18,26 +18,19 @@
         </header>
 
         <main id="flow-container">
-            <div id="view-welcome" class="view active">
+            <div id="view-connecting" class="view active">
                 <div class="welcome-box">
                     <h1>A320 FLOW TRAINER</h1>
-                    <p>Say flow name to start, say 'CHECKED' to confirm.</p>
-                    <p>Press SPACE to pause/resume, ESC to quit.</p>
                     <div class="connecting">Connecting...</div>
                 </div>
             </div>
 
-            <div id="view-activation" class="view">
-                <div class="activation-box">
-                    <div class="flow-counter" id="flow-counter"></div>
-                    <div class="next-label">NEXT FLOW</div>
-                    <h2 id="activation-flow-name"></h2>
-                    <div id="activation-flow-note" class="flow-note"></div>
-                    <div class="activation-hint">
-                        Say the flow name or press ENTER to begin
-                        <br><small>TAB/N to skip</small>
-                    </div>
+            <div id="view-flow-list" class="view">
+                <div class="flow-list-header">
+                    <h2>SELECT A FLOW</h2>
+                    <div id="startup-log" class="startup-log"></div>
                 </div>
+                <div id="flow-list" class="flow-list"></div>
             </div>
 
             <div id="view-flow" class="view">
@@ -50,8 +43,9 @@
 
             <div id="view-complete" class="view">
                 <div class="complete-box">
-                    <h1>ALL FLOWS COMPLETE</h1>
+                    <h1>FLOW COMPLETE</h1>
                     <p>Great job!</p>
+                    <button id="btn-back-to-list" class="btn-back">Back to flow list</button>
                 </div>
             </div>
         </main>

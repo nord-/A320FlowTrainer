@@ -23,17 +23,17 @@ public class SpeechRecognitionService : IDisposable
         _modelPath = modelPath;
     }
 
-    public bool Initialize()
+    public bool Initialize(StartupLog? log = null)
     {
         try
         {
             if (!Directory.Exists(_modelPath))
             {
-                Console.WriteLine($"Vosk model not found at '{_modelPath}'");
+                log?.Add("warn", $"Vosk model not found at '{_modelPath}' - using keyboard fallback");
                 return false;
             }
 
-            Console.WriteLine("Loading Vosk speech recognition model...");
+            log?.Add("info", "Loading Vosk speech recognition model...");
             Vosk.Vosk.SetLogLevel(-1);
 
             _voskModel = new Model(_modelPath);
@@ -49,13 +49,13 @@ public class SpeechRecognitionService : IDisposable
 
             _waveIn.DataAvailable += OnAudioDataAvailable;
 
-            Console.WriteLine("Vosk speech recognition ready!");
+            log?.Add("ok", "Vosk speech recognition ready");
             IsAvailable = true;
             return true;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Vosk init failed: {ex.Message}");
+            log?.Add("error", $"Vosk init failed: {ex.Message}");
             return false;
         }
     }

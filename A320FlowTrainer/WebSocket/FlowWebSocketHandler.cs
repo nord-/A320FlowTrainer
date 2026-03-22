@@ -11,17 +11,20 @@ public class FlowWebSocketHandler
     private readonly ConfirmationService _confirmationService;
     private readonly AudioService _audioService;
     private readonly SpeechRecognitionService _speechService;
+    private readonly StartupLog _startupLog;
 
     public FlowWebSocketHandler(
         FlowService flowService,
         ConfirmationService confirmationService,
         AudioService audioService,
-        SpeechRecognitionService speechService)
+        SpeechRecognitionService speechService,
+        StartupLog startupLog)
     {
         _flowService = flowService;
         _confirmationService = confirmationService;
         _audioService = audioService;
         _speechService = speechService;
+        _startupLog = startupLog;
     }
 
     public async Task HandleAsync(System.Net.WebSockets.WebSocket webSocket)
@@ -54,7 +57,7 @@ public class FlowWebSocketHandler
         }
 
         var session = new FlowSession(
-            _flowService, _confirmationService, _audioService, _speechService, Send);
+            _flowService, _confirmationService, _audioService, _speechService, _startupLog, Send);
 
         try
         {

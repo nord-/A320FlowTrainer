@@ -21,6 +21,7 @@ public class FlowSession
     private readonly ConfirmationService _confirmationService;
     private readonly AudioService _audioService;
     private readonly SpeechRecognitionService _speechService;
+    private readonly StartupLog _startupLog;
     private readonly Func<object, Task> _send;
 
     private SessionState _state = SessionState.Idle;
@@ -37,12 +38,14 @@ public class FlowSession
         ConfirmationService confirmationService,
         AudioService audioService,
         SpeechRecognitionService speechService,
+        StartupLog startupLog,
         Func<object, Task> send)
     {
         _flowService = flowService;
         _confirmationService = confirmationService;
         _audioService = audioService;
         _speechService = speechService;
+        _startupLog = startupLog;
         _send = send;
 
         _speechService.SpeechRecognized += OnSpeechRecognized;
@@ -55,6 +58,11 @@ public class FlowSession
             case "ready":
                 _testMode = root.TryGetProperty("testMode", out var tm) && tm.GetBoolean();
                 await StartSession();
+                break;
+
+            case "startFlow":
+                var flowIndex = root.GetProperty("flowIndex").GetInt32();
+                await StartFlow(flowIndex);
                 break;
 
             case "keypress":
@@ -71,6 +79,7 @@ public class FlowSession
     private async Task StartSession()
     {
         var flows = _flowService.Flows;
+        _state = SessionState.Idle;
         await _send(new
         {
             type = "init",
@@ -80,42 +89,25 @@ public class FlowSession
                 note = f.Note,
                 items = f.Items.Select(i => new { item = i.Item, response = i.Response })
             }),
-            voskAvailable = _speechService.IsAvailable
+            voskAvailable = _speechService.IsAvailable,
+            startupLog = _startupLog.Entries.Select(e => new { level = e.Level, message = e.Message })
         });
-
-        _currentFlowIndex = 0;
-        await ShowNextFlow();
     }
 
-    private async Task ShowNextFlow()
+    private async Task StartFlow(int flowIndex)
     {
         var flows = _flowService.Flows;
-        if (_currentFlowIndex >= flows.Count)
-        {
-            _state = SessionState.AllComplete;
-            await _send(new { type = "allComplete" });
-            _speechService.StopListening();
-            return;
-        }
+        if (flowIndex < 0 || flowIndex >= flows.Count) return;
 
-        var flow = flows[_currentFlowIndex];
-        _state = SessionState.WaitingForFlow;
+        _currentFlowIndex = flowIndex;
+        await ActivateFlow();
+    }
 
-        await _send(new
-        {
-            type = "showFlowActivation",
-            flowIndex = _currentFlowIndex,
-            flowName = flow.Name,
-            flowNote = flow.Note,
-            totalFlows = flows.Count
-        });
-
-        if (_speechService.IsAvailable)
-        {
-            _speechService.ResetState();
-            _speechService.StartListening();
-            await _send(new { type = "listeningState", listening = true });
-        }
+    private async Task ReturnToFlowList()
+    {
+        _speechService.StopListening();
+        _state = SessionState.Idle;
+        await _send(new { type = "showFlowList" });
     }
 
     private async Task ActivateFlow()
@@ -264,9 +256,7 @@ public class FlowSession
     {
         if (key == "escape")
         {
-            _speechService.StopListening();
-            _state = SessionState.AllComplete;
-            await _send(new { type = "allComplete" });
+            await ReturnToFlowList();
             return;
         }
 
@@ -278,16 +268,6 @@ public class FlowSession
 
         switch (_state)
         {
-            case SessionState.WaitingForFlow:
-                if (key == "enter")
-                    await ActivateFlow();
-                else if (key == "n" || key == "tab")
-                {
-                    _currentFlowIndex++;
-                    await ShowNextFlow();
-                }
-                break;
-
             case SessionState.WaitingForConfirm:
                 if (key == "enter")
                     await ConfirmCurrentItem();
@@ -310,9 +290,8 @@ public class FlowSession
                 break;
 
             case SessionState.FlowComplete:
-                _currentFlowIndex++;
                 _speechService.ResetState();
-                await ShowNextFlow();
+                await ReturnToFlowList();
                 break;
         }
     }
@@ -349,17 +328,7 @@ public class FlowSession
 
         try
         {
-            if (_state == SessionState.WaitingForFlow)
-            {
-                var flow = _flowService.Flows[_currentFlowIndex];
-                var (isMatch, score, details) = _confirmationService.IsFlowMatchWithScore(text, flow);
-
-                await _send(new { type = "speechHeard", text, score, matched = isMatch, details });
-
-                if (isMatch)
-                    await ActivateFlow();
-            }
-            else if (_state == SessionState.WaitingForConfirm)
+            if (_state == SessionState.WaitingForConfirm)
             {
                 var flow = _flowService.Flows[_currentFlowIndex];
                 var itemIndex = _itemsToRun[_currentRunIndex];

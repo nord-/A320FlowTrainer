@@ -1,30 +1,116 @@
 const FlowRenderer = (() => {
+    let allFlows = [];
     let currentItems = [];
     let currentItemStatus = [];
+    let sendFn = null;
+
+    function init(send) {
+        sendFn = send;
+    }
 
     function showView(viewId) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(viewId).classList.add('active');
     }
 
-    function showWelcome() {
-        showView('view-welcome');
+    function showConnecting() {
+        showView('view-connecting');
     }
 
-    function showFlowActivation(data) {
-        document.getElementById('flow-counter').textContent =
-            `FLOW ${data.flowIndex + 1} / ${data.totalFlows}`;
-        document.getElementById('activation-flow-name').textContent = data.flowName;
+    function showFlowList(flows, startupLog) {
+        if (flows) allFlows = flows;
+        if (startupLog) renderStartupLog(startupLog);
+        renderFlowList();
+        showView('view-flow-list');
+    }
 
-        const noteEl = document.getElementById('activation-flow-note');
-        if (data.flowNote) {
-            noteEl.textContent = data.flowNote;
-            noteEl.style.display = '';
-        } else {
-            noteEl.style.display = 'none';
-        }
+    function renderStartupLog(entries) {
+        const container = document.getElementById('startup-log');
+        container.innerHTML = '';
+        entries.forEach(entry => {
+            const line = document.createElement('div');
+            line.className = `log-entry log-${entry.level}`;
+            const icon = entry.level === 'ok' ? '\u2713' :
+                         entry.level === 'warn' ? '\u26A0' :
+                         entry.level === 'error' ? '\u2717' : '\u2022';
+            line.textContent = `${icon} ${entry.message}`;
+            container.appendChild(line);
+        });
+    }
 
-        showView('view-activation');
+    function renderFlowList() {
+        const list = document.getElementById('flow-list');
+        list.innerHTML = '';
+
+        allFlows.forEach((flow, i) => {
+            const card = document.createElement('div');
+            card.className = 'flow-card';
+
+            const header = document.createElement('div');
+            header.className = 'flow-card-header';
+            header.innerHTML = `
+                <div class="flow-card-info">
+                    <span class="flow-card-number">${i + 1}</span>
+                    <span class="flow-card-name">${escapeHtml(flow.name)}</span>
+                    <span class="flow-card-count">${flow.items.length} items</span>
+                </div>
+                <div class="flow-card-actions">
+                    <button class="btn-play" title="Start flow">&#9654;</button>
+                    <button class="btn-expand" title="Show items">&#9660;</button>
+                </div>
+            `;
+
+            const details = document.createElement('div');
+            details.className = 'flow-card-details';
+
+            if (flow.note) {
+                const note = document.createElement('div');
+                note.className = 'flow-card-note';
+                note.textContent = flow.note;
+                details.appendChild(note);
+            }
+
+            const itemTable = document.createElement('div');
+            itemTable.className = 'flow-card-items';
+            flow.items.forEach((item, j) => {
+                const row = document.createElement('div');
+                row.className = 'flow-card-item';
+                row.innerHTML = `
+                    <span class="fci-number">${j + 1}.</span>
+                    <span class="fci-name">${escapeHtml(item.item)}</span>
+                    <span class="fci-sep">&rarr;</span>
+                    <span class="fci-response">${escapeHtml(item.response)}</span>
+                `;
+                itemTable.appendChild(row);
+            });
+            details.appendChild(itemTable);
+
+            card.appendChild(header);
+            card.appendChild(details);
+
+            // Expand/collapse
+            header.querySelector('.btn-expand').addEventListener('click', (e) => {
+                e.stopPropagation();
+                card.classList.toggle('expanded');
+                const btn = header.querySelector('.btn-expand');
+                btn.innerHTML = card.classList.contains('expanded') ? '&#9650;' : '&#9660;';
+            });
+
+            // Play button
+            header.querySelector('.btn-play').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (sendFn) sendFn({ type: 'startFlow', flowIndex: i });
+            });
+
+            // Click header to expand too
+            header.querySelector('.flow-card-info').addEventListener('click', () => {
+                card.classList.toggle('expanded');
+                const btn = header.querySelector('.btn-expand');
+                btn.innerHTML = card.classList.contains('expanded') ? '&#9650;' : '&#9660;';
+            });
+
+            list.appendChild(card);
+        });
     }
 
     function showFlow(data) {
@@ -66,7 +152,6 @@ const FlowRenderer = (() => {
             list.appendChild(row);
         });
 
-        // Scrolla till aktiv item
         if (activeIndex >= 0) {
             const activeRow = document.getElementById(`item-${activeIndex}`);
             if (activeRow) {
@@ -115,7 +200,6 @@ const FlowRenderer = (() => {
         el.style.color = color;
         el.textContent = `Heard: "${text}" ${score != null ? `(${score}%)` : ''}`;
 
-        // Rensa efter 3 sekunder om inget nytt
         clearTimeout(el._timer);
         el._timer = setTimeout(() => { el.textContent = ''; }, 3000);
     }
@@ -127,8 +211,9 @@ const FlowRenderer = (() => {
     }
 
     return {
-        showWelcome,
-        showFlowActivation,
+        init,
+        showConnecting,
+        showFlowList,
         showFlow,
         updateItem,
         showComplete,

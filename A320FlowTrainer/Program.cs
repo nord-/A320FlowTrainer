@@ -10,21 +10,32 @@ builder.WebHost.UseUrls("http://localhost:5320");
 
 // Registrera services - anvand BaseDirectory dar build kopierar flows.json och audio/
 var baseDir = AppContext.BaseDirectory;
+var startupLog = new StartupLog();
 var flowService = new FlowService();
 var audioDir = Path.Combine(baseDir, "audio");
 var modelPath = Path.Combine(baseDir, "model");
 
-if (!flowService.LoadFlows(Path.Combine(baseDir, "flows.json")))
+if (!flowService.LoadFlows(Path.Combine(baseDir, "flows.json"), startupLog))
 {
     Console.WriteLine("ERROR: Could not load flows.json");
     return;
 }
 
+// Kolla ljudfiler
+var audioFileCount = Directory.Exists(audioDir)
+    ? Directory.GetFiles(audioDir, "*.wav").Length
+    : 0;
+startupLog.Add(audioFileCount > 0 ? "ok" : "warn",
+    audioFileCount > 0
+        ? $"Found {audioFileCount} audio files"
+        : "No audio files found - will use browser TTS");
+
 var confirmationService = new ConfirmationService();
 var audioService = new AudioService(audioDir);
 var speechService = new SpeechRecognitionService(modelPath);
-speechService.Initialize();
+speechService.Initialize(startupLog);
 
+builder.Services.AddSingleton(startupLog);
 builder.Services.AddSingleton(flowService);
 builder.Services.AddSingleton(confirmationService);
 builder.Services.AddSingleton(audioService);
