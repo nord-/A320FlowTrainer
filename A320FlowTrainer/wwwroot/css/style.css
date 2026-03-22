@@ -224,6 +224,20 @@ main {
     border-radius: 6px;
     margin-bottom: 8px;
     overflow: hidden;
+    transition: opacity 0.2s;
+}
+
+.flow-card.completed {
+    opacity: 0.45;
+}
+
+.flow-card.next {
+    border-color: var(--green);
+    box-shadow: 0 0 0 1px rgba(0, 255, 65, 0.15);
+}
+
+.flow-card.completed.next {
+    opacity: 1;
 }
 
 .flow-card-header {

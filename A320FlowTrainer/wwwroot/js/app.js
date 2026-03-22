@@ -44,7 +44,7 @@
                 break;
 
             case 'showFlowList':
-                FlowRenderer.showFlowList();
+                FlowRenderer.showFlowList(null, null, msg.completedFlows, msg.nextFlowIndex);
                 break;
 
             case 'showFlow':

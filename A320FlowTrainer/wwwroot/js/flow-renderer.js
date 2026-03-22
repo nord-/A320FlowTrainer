@@ -1,5 +1,7 @@
 const FlowRenderer = (() => {
     let allFlows = [];
+    let completedFlows = new Set();
+    let nextFlowIndex = 0;
     let currentItems = [];
     let currentItemStatus = [];
     let sendFn = null;
@@ -17,9 +19,11 @@ const FlowRenderer = (() => {
         showView('view-connecting');
     }
 
-    function showFlowList(flows, startupLog) {
+    function showFlowList(flows, startupLog, completed, nextIdx) {
         if (flows) allFlows = flows;
         if (startupLog) renderStartupLog(startupLog);
+        if (completed) completedFlows = new Set(completed);
+        if (nextIdx !== undefined) nextFlowIndex = nextIdx;
         renderFlowList();
         showView('view-flow-list');
     }
@@ -45,6 +49,8 @@ const FlowRenderer = (() => {
         allFlows.forEach((flow, i) => {
             const card = document.createElement('div');
             card.className = 'flow-card';
+            if (completedFlows.has(i)) card.classList.add('completed');
+            if (i === nextFlowIndex) card.classList.add('next');
 
             const header = document.createElement('div');
             header.className = 'flow-card-header';
@@ -112,6 +118,12 @@ const FlowRenderer = (() => {
 
             list.appendChild(card);
         });
+
+        // Scrolla till nasta flow
+        const nextCard = list.querySelector('.flow-card.next');
+        if (nextCard) {
+            setTimeout(() => nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+        }
     }
 
     function showFlow(data) {

@@ -29,6 +29,7 @@ public class FlowSession
     private int _currentFlowIndex;
     private int _currentRunIndex;
     private int _lastCompletedFlowIndex = -1;
+    private HashSet<int> _completedFlows = new();
     private List<int> _itemsToRun = new();
     private string[] _itemStatus = Array.Empty<string>();
     private bool _testMode;
@@ -114,12 +115,29 @@ public class FlowSession
         await ActivateFlow();
     }
 
+    private int GetNextFlowIndex()
+    {
+        var total = _flowService.Flows.Count;
+        // Forsta flow efter senast avslutade som inte ar klarmarkerat
+        for (int offset = 1; offset <= total; offset++)
+        {
+            var idx = (_lastCompletedFlowIndex + offset) % total;
+            if (!_completedFlows.Contains(idx)) return idx;
+        }
+        return (_lastCompletedFlowIndex + 1) % total;
+    }
+
     private async Task ReturnToFlowList()
     {
         _speechService.StopListening();
         _state = SessionState.Idle;
         await _send(new { type = "listeningState", listening = false });
-        await _send(new { type = "showFlowList" });
+        await _send(new
+        {
+            type = "showFlowList",
+            completedFlows = _completedFlows.ToArray(),
+            nextFlowIndex = GetNextFlowIndex()
+        });
     }
 
     private async Task ActivateFlow()
@@ -247,6 +265,7 @@ public class FlowSession
     {
         var flow = _flowService.Flows[_currentFlowIndex];
         _lastCompletedFlowIndex = _currentFlowIndex;
+        _completedFlows.Add(_currentFlowIndex);
 
         _speechService.StopListening();
         await _send(new { type = "listeningState", listening = false });
@@ -371,8 +390,7 @@ public class FlowSession
                 // "next flow" / "run next flow" -> starta nasta flow
                 if (inputLower.Contains("next flow") || inputLower.Contains("next"))
                 {
-                    var nextIndex = _lastCompletedFlowIndex + 1;
-                    if (nextIndex >= _flowService.Flows.Count) nextIndex = 0;
+                    var nextIndex = GetNextFlowIndex();
                     await _send(new { type = "speechHeard", text, score = 100, matched = true, details = "next flow" });
                     _idleListening = false;
                     await StartFlow(nextIndex);
