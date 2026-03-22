@@ -37,6 +37,8 @@ public class ConfirmationService
         { "retract", new[] { "retracted", "retract" } },
         { "released", new[] { "released", "release" } },
         { "stowed", new[] { "stowed", "stow" } },
+        { "open", new[] { "open", "opened" } },
+        { "ign", new[] { "ignition", "ignite" } },
         { "start", new[] { "start", "started", "starting" } },
         { "press", new[] { "pressed", "press" } },
         { "select", new[] { "selected", "select" } },
@@ -63,7 +65,8 @@ public class ConfirmationService
     private static readonly Dictionary<string, string[]> ItemMatches = new()
     {
         { "clearance", new[] { "clear", "clearance", "cleared", "approved", "received" } },
-        { "communication", new[] { "communication", "established", "contact" } },
+        { "communication", new[] { "communication", "established", "contact", "initiated" } },
+        { "right side", new[] { "clear", "cleared" } },
     };
 
     public bool IsConfirmation(string input, FlowItem? item = null)
