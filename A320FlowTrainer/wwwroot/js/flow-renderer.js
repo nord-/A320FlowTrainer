@@ -30,10 +30,10 @@ const FlowRenderer = (() => {
         entries.forEach(entry => {
             const line = document.createElement('div');
             line.className = `log-entry log-${entry.level}`;
-            const icon = entry.level === 'ok' ? '\u2713' :
-                         entry.level === 'warn' ? '\u26A0' :
-                         entry.level === 'error' ? '\u2717' : '\u2022';
-            line.textContent = `${icon} ${entry.message}`;
+            const iconClass = entry.level === 'ok' ? 'mdi-check-circle-outline' :
+                              entry.level === 'warn' ? 'mdi-alert-outline' :
+                              entry.level === 'error' ? 'mdi-close-circle-outline' : 'mdi-information-outline';
+            line.innerHTML = `<span class="mdi ${iconClass}"></span> ${escapeHtml(entry.message)}`;
             container.appendChild(line);
         });
     }
@@ -55,8 +55,8 @@ const FlowRenderer = (() => {
                     <span class="flow-card-count">${flow.items.length} items</span>
                 </div>
                 <div class="flow-card-actions">
-                    <button class="btn-play" title="Start flow">&#9654;</button>
-                    <button class="btn-expand" title="Show items">&#9660;</button>
+                    <button class="btn-play" title="Start flow"><span class="mdi mdi-play"></span></button>
+                    <button class="btn-expand" title="Show items"><span class="mdi mdi-chevron-down"></span></button>
                 </div>
             `;
 
@@ -92,8 +92,8 @@ const FlowRenderer = (() => {
             header.querySelector('.btn-expand').addEventListener('click', (e) => {
                 e.stopPropagation();
                 card.classList.toggle('expanded');
-                const btn = header.querySelector('.btn-expand');
-                btn.innerHTML = card.classList.contains('expanded') ? '&#9650;' : '&#9660;';
+                const icon = header.querySelector('.btn-expand .mdi');
+                icon.className = card.classList.contains('expanded') ? 'mdi mdi-chevron-up' : 'mdi mdi-chevron-down';
             });
 
             // Play button
@@ -105,8 +105,8 @@ const FlowRenderer = (() => {
             // Click header to expand too
             header.querySelector('.flow-card-info').addEventListener('click', () => {
                 card.classList.toggle('expanded');
-                const btn = header.querySelector('.btn-expand');
-                btn.innerHTML = card.classList.contains('expanded') ? '&#9650;' : '&#9660;';
+                const icon = header.querySelector('.btn-expand .mdi');
+                icon.className = card.classList.contains('expanded') ? 'mdi mdi-chevron-up' : 'mdi mdi-chevron-down';
             });
 
             list.appendChild(card);
@@ -137,9 +137,9 @@ const FlowRenderer = (() => {
             if (isActive) row.classList.add('active');
             if (status === 'done') row.classList.add('done');
 
-            const statusIcon = status === 'done' ? '&#10003;' :
-                               isActive ? '&#9658;' :
-                               status === 'skip' ? '&#183;' : '';
+            const statusIcon = status === 'done' ? '<span class="mdi mdi-check"></span>' :
+                               isActive ? '<span class="mdi mdi-play"></span>' :
+                               status === 'skip' ? '<span class="mdi mdi-minus"></span>' : '';
 
             row.innerHTML = `
                 <span class="item-status ${status}">${statusIcon}</span>

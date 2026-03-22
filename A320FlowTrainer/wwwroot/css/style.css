@@ -1,3 +1,11 @@
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('../fonts/inter-latin.woff2') format('woff2');
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -16,6 +24,7 @@
     --amber: #ffa500;
     --green: #00ff41;
     --red: #ff4444;
+    --font-ui: "Inter", -apple-system, "Segoe UI", sans-serif;
     --font-mono: "Consolas", "JetBrains Mono", "Courier New", monospace;
 }
 
@@ -23,7 +32,7 @@ html, body {
     height: 100%;
     background: var(--bg-primary);
     color: var(--text-primary);
-    font-family: var(--font-mono);
+    font-family: var(--font-ui);
     font-size: 14px;
     overflow: hidden;
 }
@@ -158,6 +167,7 @@ main {
     background: var(--bg-primary);
     border: 1px solid var(--border);
     border-radius: 4px;
+    font-family: var(--font-mono);
     font-size: 12px;
     line-height: 1.6;
 }
@@ -273,6 +283,7 @@ main {
 .flow-card-item {
     display: flex;
     align-items: center;
+    font-family: var(--font-mono);
     font-size: 12px;
     padding: 2px 0;
 }
@@ -351,6 +362,8 @@ main {
     display: flex;
     align-items: center;
     padding: 6px 24px;
+    font-family: var(--font-mono);
+    font-size: 13px;
     transition: background 0.2s;
 }
 
@@ -431,6 +444,8 @@ footer {
 
 #keyboard-hints {
     color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 11px;
     letter-spacing: 0.5px;
 }
 
