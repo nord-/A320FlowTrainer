@@ -70,6 +70,11 @@ public class FlowSession
                 await HandleKeypress(key);
                 break;
 
+            case "setInputDevice":
+                var deviceId = root.GetProperty("deviceId").GetInt32();
+                _speechService.SetInputDevice(deviceId);
+                break;
+
             case "audioComplete":
                 await HandleAudioComplete();
                 break;
@@ -90,6 +95,9 @@ public class FlowSession
                 items = f.Items.Select(i => new { item = i.Item, response = i.Response })
             }),
             voskAvailable = _speechService.IsAvailable,
+            inputDevices = _speechService.GetInputDevices().Select(d => new { id = d.Id, name = d.Name }),
+            outputDevices = _speechService.GetOutputDevices().Select(d => new { id = d.Id, name = d.Name }),
+            currentInputDevice = _speechService.CurrentDeviceNumber,
             startupLog = _startupLog.Entries.Select(e => new { level = e.Level, message = e.Message })
         });
     }

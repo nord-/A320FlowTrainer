@@ -16,7 +16,6 @@ const AudioPlayer = (() => {
         if (url) {
             audio.src = url;
             audio.play().catch(() => {
-                // Om uppspelning misslyckas, prova TTS
                 if (fallbackText) {
                     speakText(fallbackText, completeCb);
                 } else if (onComplete) {
@@ -31,7 +30,7 @@ const AudioPlayer = (() => {
     }
 
     function speakText(text, completeCb) {
-        onComplete = null; // Forhindra dubbel-callback
+        onComplete = null;
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = 1.0;
@@ -43,5 +42,29 @@ const AudioPlayer = (() => {
         }
     }
 
-    return { play };
+    async function setOutputDevice(deviceId) {
+        if (audio.setSinkId) {
+            try {
+                await audio.setSinkId(deviceId);
+            } catch (e) {
+                console.warn('Could not set output device:', e);
+            }
+        }
+    }
+
+    async function getOutputDevices() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            return [];
+        }
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            return devices
+                .filter(d => d.kind === 'audiooutput')
+                .map(d => ({ id: d.deviceId, name: d.label || `Speaker ${d.deviceId.slice(0, 8)}` }));
+        } catch {
+            return [];
+        }
+    }
+
+    return { play, setOutputDevice, getOutputDevices };
 })();

@@ -8,12 +8,20 @@ var builder = WebApplication.CreateBuilder(args);
 // Konfigurera Kestrel
 builder.WebHost.UseUrls("http://localhost:5320");
 
-// Registrera services - anvand BaseDirectory dar build kopierar flows.json och audio/
+// Registrera services
+// BaseDirectory = build output (dar flows.json och audio/ kopieras)
+// projectDir = A320FlowTrainer/ (dar model/ ligger, for stor for att kopiera vid build)
 var baseDir = AppContext.BaseDirectory;
+var projectDir = Path.GetFullPath(Path.Combine(baseDir, "..", "..", ".."));
 var startupLog = new StartupLog();
 var flowService = new FlowService();
 var audioDir = Path.Combine(baseDir, "audio");
-var modelPath = Path.Combine(baseDir, "model");
+
+// Vosk-modellen kopieras inte vid build - sok i flera sokvagar
+var modelPath = new[] {
+    Path.Combine(baseDir, "model"),
+    Path.Combine(projectDir, "model"),
+}.FirstOrDefault(Directory.Exists) ?? Path.Combine(baseDir, "model");
 
 if (!flowService.LoadFlows(Path.Combine(baseDir, "flows.json"), startupLog))
 {
