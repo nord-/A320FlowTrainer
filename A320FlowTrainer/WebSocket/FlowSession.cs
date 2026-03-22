@@ -28,6 +28,7 @@ public class FlowSession
     private SessionState _stateBeforePause;
     private int _currentFlowIndex;
     private int _currentRunIndex;
+    private int _lastCompletedFlowIndex = -1;
     private List<int> _itemsToRun = new();
     private string[] _itemStatus = Array.Empty<string>();
     private bool _testMode;
@@ -245,6 +246,7 @@ public class FlowSession
     private async Task CompleteFlow()
     {
         var flow = _flowService.Flows[_currentFlowIndex];
+        _lastCompletedFlowIndex = _currentFlowIndex;
 
         _speechService.StopListening();
         await _send(new { type = "listeningState", listening = false });
@@ -364,6 +366,19 @@ public class FlowSession
         {
             if (_state == SessionState.Idle && _idleListening)
             {
+                var inputLower = text.ToLower();
+
+                // "next flow" / "run next flow" -> starta nasta flow
+                if (inputLower.Contains("next flow") || inputLower.Contains("next"))
+                {
+                    var nextIndex = _lastCompletedFlowIndex + 1;
+                    if (nextIndex >= _flowService.Flows.Count) nextIndex = 0;
+                    await _send(new { type = "speechHeard", text, score = 100, matched = true, details = "next flow" });
+                    _idleListening = false;
+                    await StartFlow(nextIndex);
+                    return;
+                }
+
                 // Matcha mot alla flows - valj basta match
                 var flows = _flowService.Flows;
                 int bestIndex = -1;
