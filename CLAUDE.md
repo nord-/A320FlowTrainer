@@ -41,19 +41,21 @@ python generate_audio_piper.py --model tools/piper/en_US-joe-medium.onnx
 **Data flow:**
 1. `parse_flows_v2.py` → genererar `flows.json` och `audio_files.json`
 2. `generate_audio_*.py` → skapar ljudfiler i `audio/`
-3. `A320FlowTrainer/Program.cs` → läser `flows.json`, spelar ljud, lyssnar på röst/tangentbord
+3. `A320FlowTrainer/` → ASP.NET backend + webbfrontend (WebSocket-baserad)
 
 **Key files:**
 - `flows.json` - strukturerad flow-data (namn, items, responses)
 - `audio_files.json` - lista på ljudfiler med expanderade TTS-texter
-- `A320FlowTrainer/Program.cs` - all applikationslogik (single-file)
+- `A320FlowTrainer/Program.cs` - ASP.NET startup, konfigurerar Kestrel + WebSocket
+- `A320FlowTrainer/Models/Flow.cs` - datamodeller (Flow, FlowItem, enums)
+- `A320FlowTrainer/Services/` - FlowService, ConfirmationService, AudioService, SpeechRecognitionService
+- `A320FlowTrainer/WebSocket/` - FlowWebSocketHandler, FlowSession (tillstandsmaskin), Messages
+- `A320FlowTrainer/wwwroot/` - Frontend (HTML/CSS/JS)
 
 **C# dependencies:**
-- .NET 10.0 Windows
+- .NET 10.0 Windows (Microsoft.NET.Sdk.Web)
 - Vosk (speech recognition)
 - NAudio (audio capture)
-- System.Speech NuGet package (TTS synthesis)
-- System.Media.SoundPlayer (.wav playback)
 
 **Vosk model:**
 - Måste laddas ner separat till `A320FlowTrainer/model/`
@@ -63,12 +65,14 @@ python generate_audio_piper.py --model tools/piper/en_US-joe-medium.onnx
 
 - Använd spaces, inte tabs, för indentering
 - Använd CRLF line endings (Windows-standard)
+- Följ principerna DRY (Don't Repeat Yourself), KISS (Keep It Simple, Stupid) och SOLID
 
 ## Notes
 
-- Windows-only (kräver System.Speech för TTS)
-- Vosk för röstigenkänning (offline, bättre än Windows Speech Recognition)
-- Fallback till Windows TTS om ljudfiler saknas
+- Windows-only (Vosk + NAudio kräver Windows)
+- Webbgränssnitt på http://localhost:5320 (auto-öppnar browser)
+- Vosk för röstigenkänning (offline, server-side)
+- Fallback till browser speechSynthesis om ljudfiler saknas
 - Fallback till tangentbord om Vosk-modell saknas
 
 ## Workflow Preferences
@@ -76,3 +80,4 @@ python generate_audio_piper.py --model tools/piper/en_US-joe-medium.onnx
 - Commita direkt utan att fråga om commit-meddelande (skriv lämpligt meddelande själv)
 - Bygg alltid efter kodändringar för att verifiera
 - flows.json och audio/ kopieras automatiskt till output vid build
+- Använd ALDRIG "cd" eller "git -C" i Bash-kommandon - lita på working directory

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A320 Flow Trainer</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <header id="header">
+            <div class="header-title">AIRBUS A320/321 FLOW TRAINER</div>
+            <div class="header-status">
+                <span id="mic-indicator" class="indicator off"><span class="rec-dot"></span> MIC</span>
+                <span id="pause-indicator" class="indicator off">PAUSED</span>
+                <button id="btn-settings" class="btn-icon" title="Settings"><span class="mdi mdi-cog"></span></button>
+            </div>
+        </header>
+
+        <main id="flow-container">
+            <div id="view-connecting" class="view active">
+                <div class="welcome-box">
+                    <h1>A320 FLOW TRAINER</h1>
+                    <div class="connecting">Connecting...</div>
+                </div>
+            </div>
+
+            <div id="view-flow-list" class="view">
+                <div class="flow-list-header">
+                    <h2>SELECT A FLOW</h2>
+                    <details class="startup-log-details">
+                        <summary>Startup log</summary>
+                        <div id="startup-log" class="startup-log"></div>
+                    </details>
+                </div>
+                <div id="flow-list" class="flow-list"></div>
+            </div>
+
+            <div id="view-flow" class="view">
+                <div class="flow-header">
+                    <span id="flow-name" class="flow-title"></span>
+                    <span id="flow-progress" class="flow-progress"></span>
+                </div>
+                <div id="item-list" class="item-list"></div>
+            </div>
+
+            <div id="view-complete" class="view">
+                <div class="complete-box">
+                    <h1>FLOW COMPLETE</h1>
+                    <p>Great job!</p>
+                    <button id="btn-back-to-list" class="btn-back"><span class="mdi mdi-arrow-left"></span> Back to flow list</button>
+                </div>
+            </div>
+        </main>
+
+        <footer id="status-bar">
+            <span id="speech-feedback"></span>
+            <span id="keyboard-hints">ENTER=confirm SPACE=pause ESC=quit R=repeat</span>
+        </footer>
+    </div>
+
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>SETTINGS</h3>
+                <button id="btn-close-settings" class="btn-icon"><span class="mdi mdi-close"></span></button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label for="input-device">Microphone (input)</label>
+                    <select id="input-device"></select>
+                </div>
+                <div class="setting-group">
+                    <label for="output-device">Speaker (output)</label>
+                    <select id="output-device"></select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/audio-player.js"></script>
+    <script src="js/keyboard-handler.js"></script>
+    <script src="js/flow-renderer.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
